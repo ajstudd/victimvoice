@@ -15,7 +15,7 @@ export default function Home() {
           <div className="flex items-center space-x-2">
             <Shield className="h-8 w-8 text-primary animate-float" />
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-              VictimVoice New Push
+              VictimVoice
             </span>
           </div>
           <div className="space-x-4">
