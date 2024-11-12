@@ -9,7 +9,7 @@ export default function Home() {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:32px_32px]" />
       </div>
-
+      
       <div className="container mx-auto px-4 py-8 relative">
         <nav className="flex justify-between items-center mb-16 animate-fade-in">
           <div className="flex items-center space-x-2">
