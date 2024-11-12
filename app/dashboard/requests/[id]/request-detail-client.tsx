@@ -72,7 +72,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                     variant="secondary"
                     className={
                       statusColors[
-                        request.status as keyof typeof statusColors
+                      request.status as keyof typeof statusColors
                       ]
                     }
                   >
@@ -95,7 +95,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-medium mb-2">Accused's Address</h3>
+                    <h3 className="font-medium mb-2">Accused&apos;s Address</h3>
                     <p className="text-muted-foreground">
                       {request.accusedAddress}
                     </p>
@@ -140,11 +140,10 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                   {request.messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex items-start gap-4 p-4 rounded-lg ${
-                        message.sender === "Admin"
-                          ? "bg-muted/50"
-                          : "bg-primary/10"
-                      }`}
+                      className={`flex items-start gap-4 p-4 rounded-lg ${message.sender === "Admin"
+                        ? "bg-muted/50"
+                        : "bg-primary/10"
+                        }`}
                     >
                       <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div>
@@ -220,7 +219,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  If you're in immediate danger, please contact emergency services:
+                  If you&apos;re in immediate danger, please contact emergency services:
                 </p>
                 <div className="text-lg font-bold text-primary text-center">
                   911

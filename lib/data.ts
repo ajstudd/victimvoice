@@ -1,3 +1,5 @@
+import { RequestType } from "./types";
+
 export const MOCK_REQUESTS = [
   {
     id: "REQ001",
@@ -41,4 +43,4 @@ export const MOCK_REQUESTS = [
     evidence: [],
     messages: [],
   },
-] as const;
+] as RequestType[];
