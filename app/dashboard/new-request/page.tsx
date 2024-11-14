@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,25 +23,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function NewRequest() {
+  const isAuthenticated = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    userAddress: "",
+    accusedAddress: "",
+    accusedName: "",
+    accusedPhone: "",
+    harassmentType: "",
+    severityLevel: "",
+    description: "",
+    screenshotEvidence: "",
+    videoEvidence: "",
+  });
+
+  const handleChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
+
+    // Basic form validation
+    const { userAddress, accusedAddress, accusedName, harassmentType, severityLevel, description, screenshotEvidence, videoEvidence, accusedPhone } = formData;
+    if (!userAddress || !accusedAddress || !accusedName || !harassmentType || !severityLevel || !description || !screenshotEvidence || !videoEvidence) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Request submitted successfully",
-        description: "We'll review your case and respond as soon as possible.",
+    try {
+      // Get JWT token from the authentication context
+      const token = localStorage.getItem("jwtToken"); // Assuming the token is stored in localStorage
+
+      // Make the API call with the token in the headers
+      const response = await axios.post("/support-requests", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      router.push("/dashboard");
-    }, 1500);
+
+      if (response.status === 200) {
+        toast({
+          title: "Request submitted successfully",
+          description: "We'll review your case and respond as soon as possible.",
+        });
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Submission Error",
+        description: "There was an issue submitting your request. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,17 +126,28 @@ export default function NewRequest() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Your Address</label>
-                  <Input placeholder="Enter your full address" required />
+                  <Input name="userAddress" placeholder="Enter your full address" required onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Accused's Address</label>
-                  <Input placeholder="Enter the accused's address" required />
+                  <label className="text-sm font-medium">Accused&apos;s Address</label>
+                  <Input name="accusedAddress" placeholder="Enter the accused's address" required onChange={handleChange} />
                 </div>
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium">Accused&apos;s Name</label>
+                <Input name="accusedName" placeholder="Enter the accused's name" required onChange={handleChange} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Accused&apos;s Phone</label>
+                <Input name="accusedPhone" placeholder="Enter the accused's phone number" required onChange={handleChange} />
+              </div>
+
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Type of Harassment</label>
-                <Select required>
+                <Select required onValueChange={(value) => setFormData({ ...formData, harassmentType: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -101,7 +164,7 @@ export default function NewRequest() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Severity Level</label>
-                <Select required>
+                <Select required onValueChange={(value) => setFormData({ ...formData, severityLevel: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select severity" />
                   </SelectTrigger>
@@ -116,37 +179,46 @@ export default function NewRequest() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  placeholder="Please describe the situation in detail..."
-                  className="min-h-[150px]"
-                  required
-                />
+                <Textarea name="description" placeholder="Please describe the situation in detail..." className="min-h-[150px]" required onChange={handleChange} />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Evidence Links</label>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Screenshots of conversations (URLs)
-                    </p>
-                    <Input placeholder="Enter URL to screenshot evidence" />
+                    <p className="text-sm text-muted-foreground mb-2">Screenshots of conversations (URLs)</p>
+                    <Input name="screenshotEvidence" placeholder="Enter URL to screenshot evidence" onChange={handleChange} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Video evidence (URLs)
-                    </p>
-                    <Input placeholder="Enter URL to video evidence" />
+                    <p className="text-sm text-muted-foreground mb-2">Video evidence (URLs)</p>
+                    <Input name="videoEvidence" placeholder="Enter URL to video evidence" onChange={handleChange} />
                   </div>
                 </div>
               </div>
+
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="link">How to : Upload files on Google Drive and share link</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <iframe
+                    width="460"
+                    height="315"
+                    src="https://www.youtube.com/embed/Lx0sozfFVv8?si=GdYXB82yVvw1sxHd"
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                </DialogContent>
+              </Dialog>
 
               <div className="flex justify-end space-x-4">
                 <Button type="button" variant="outline" asChild>
                   <Link href="/dashboard">Cancel</Link>
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-primary hover:bg-primary/90"
                   disabled={isSubmitting}
                 >

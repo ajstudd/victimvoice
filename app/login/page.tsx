@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
@@ -12,21 +13,46 @@ export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
+  const history = useRouter();
   const { toast } = useToast();
-
-  const handleSendCode = (e: React.FormEvent) => {
+  const handleSendCode = async (e: any) => {
     e.preventDefault();
-    setShowVerification(true);
-    toast({
-      title: "Verification code sent",
-      description: "Please check your phone for the verification code.",
+
+    const response = await fetch('/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber })
     });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setShowVerification(true);
+      toast({ title: data.message });
+    } else {
+      toast({ title: "Error", description: data.error });
+    }
   };
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: any) => {
     e.preventDefault();
-    window.location.href = "/dashboard";
+
+    const response = await fetch('/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber, otp: verificationCode })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.token) {
+      localStorage.setItem('jwtToken', data.token); // Save token to localStorage
+      history.push('/dashboard'); // Redirect to a protected route
+    } else {
+      console.error(data.error);
+    }
   };
+
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-secondary">
@@ -54,7 +80,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-8">
             <Shield className="h-12 w-12 text-primary animate-float" />
           </div>
-          
+
           <h1 className="text-3xl font-bold text-center mb-2">
             Welcome to VictimVoice
           </h1>

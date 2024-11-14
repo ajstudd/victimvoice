@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import * as XLSX from "xlsx"; // Import the XLSX library
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,31 +19,10 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-
-// Mock data - replace with actual API call
-const MOCK_REQUESTS = [
-  {
-    id: "REQ001",
-    phone: "+1234567890",
-    status: "pending",
-    createdAt: "2024-03-20",
-    priority: "high",
-    type: "harassment",
-  },
-  {
-    id: "REQ002",
-    phone: "+1987654321",
-    status: "in_progress",
-    createdAt: "2024-03-19",
-    priority: "medium",
-    type: "threat",
-  },
-  // Add more mock data as needed
-];
+import { RequestType } from "@/lib/types";
 
 const statusColors = {
   pending: "bg-yellow-500/10 text-yellow-500",
@@ -54,16 +35,70 @@ const priorityIcons = {
   high: <AlertCircle className="h-4 w-4 text-red-500" />,
   medium: <Clock className="h-4 w-4 text-yellow-500" />,
   low: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+  critical: <AlertCircle className="h-4 w-4 text-purple-500" />,
 };
 
 export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [supportRequests, setSupportRequests] = useState<RequestType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredRequests = MOCK_REQUESTS.filter(
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    window.location.href = "/admin/login";
+  };
+
+  useEffect(() => {
+    const fetchSupportRequests = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("/admin-support-requests", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        });
+        setSupportRequests(response.data);
+      } catch (err) {
+        console.error("Error fetching support requests:", err);
+        setError("Failed to load support requests. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSupportRequests();
+  }, []);
+
+  const filteredRequests = supportRequests.filter(
     (request) =>
-      request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.userId.includes(searchQuery) ||
       request.phone.includes(searchQuery)
   );
+
+  const handleExport = () => {
+    // Prepare data for export
+    const data = filteredRequests.map((request) => ({
+      "Phone": request.phone,
+      "Request ID": request._id,
+      "User ID": request.userId,
+      "Type": request.harassmentType,
+      "Priority": request.severityLevel,
+      "Status": request.status,
+      "Date": new Date(request.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Create a new workbook and add the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Support Requests");
+
+    // Export the workbook to a file
+    XLSX.writeFile(workbook, "SupportRequests.xlsx");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,8 +109,8 @@ export default function AdminDashboard() {
               <Shield className="h-8 w-8 text-primary" />
               <span className="text-xl font-semibold">Admin Dashboard</span>
             </div>
-            <Button variant="ghost" asChild>
-              <Link href="/admin/login">Logout</Link>
+            <Button variant="ghost" onClick={handleLogout}>
+              Logout
             </Button>
           </div>
         </div>
@@ -88,72 +123,74 @@ export default function AdminDashboard() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by ID or phone number..."
+                placeholder="Search by ID, user ID, or Phone"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleExport}>
               Export Data
             </Button>
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Request ID</TableHead>
-                <TableHead>Phone Number</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.id}</TableCell>
-                  <TableCell>{request.phone}</TableCell>
-                  <TableCell className="capitalize">{request.type}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {priorityIcons[request.priority as keyof typeof priorityIcons]}
-                      <span className="capitalize">{request.priority}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        statusColors[
-                          request.status as keyof typeof statusColors
-                        ]
-                      }
-                    >
-                      {request.status.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{request.createdAt}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                    >
-                      <Link href={`/admin/requests/${request.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                  </TableCell>
+        {loading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <div className="bg-card rounded-lg shadow">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell>Phone</TableCell>
+                  <TableHead>Request ID</TableHead>
+                  <TableHead>User ID</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredRequests.map((request) => (
+                  <TableRow key={request._id}>
+                    <TableCell className="font-medium">{request.phone}</TableCell>
+                    <TableCell className="font-medium">{request._id}</TableCell>
+                    <TableCell>{request.userId}</TableCell>
+                    <TableCell className="capitalize">{request.harassmentType.replace("_", " ")}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {priorityIcons[request.severityLevel.toLowerCase() as 'high' | 'medium' | 'low' | 'critical']}
+                        <span className="capitalize">{request.severityLevel}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          statusColors[request.status.toLowerCase().replace(" ", "_") as 'pending' | 'in_progress' | 'resolved' | 'closed']
+                        }
+                      >
+                        {request.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/requests?id=${request._id}`}>
+                          View Details
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </main>
     </div>
   );

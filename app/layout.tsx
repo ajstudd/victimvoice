@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'VictimVoice - Safe Space for Survivors',
   description: 'A secure platform for reporting and addressing abuse cases',
 };
+export const dynamicParams = true;
+
+
 
 export default function RootLayout({
   children,

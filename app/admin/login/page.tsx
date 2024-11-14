@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Shield, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import axios from "axios"; // Import axios
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -16,17 +17,38 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication
-    if (email === "admin@victimvoice.org" && password === "admin") {
-      toast({
-        title: "Login successful",
-        description: "Welcome back, admin!",
-      });
-      router.push("/admin/dashboard");
-    } else {
+
+    try {
+      // Make the API call to the backend
+      const response = await axios.post('/adminlogin', { email, password });
+
+      if (response.data.success) {
+        // Save the JWT token in localStorage
+        localStorage.setItem("adminToken", response.data.token);
+
+        // Show success toast notification
+        toast({
+          title: "Login successful",
+          description: "Welcome back, admin!",
+        });
+
+        // Redirect to the admin dashboard
+        router.push("/admin/dashboard");
+      } else {
+        // Show error toast for invalid credentials
+        toast({
+          title: "Login failed",
+          description: response.data.error || "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
+
+      // Show error toast for any server or network issues
       toast({
         title: "Login failed",
-        description: "Invalid credentials",
+        description: "Error logging in admin. Please try again.",
         variant: "destructive",
       });
     }
@@ -81,10 +103,7 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-sm text-primary hover:underline"
-          >
+          <Link href="/" className="text-sm text-primary hover:underline">
             Return to home page
           </Link>
         </div>

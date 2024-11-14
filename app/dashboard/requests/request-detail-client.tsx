@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Shield, ArrowLeft, Send, Clock, AlertCircle, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -25,15 +27,38 @@ const statusColors = {
 
 export function RequestDetailClient({ request }: { request: RequestType }) {
   const [reply, setReply] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSendReply = async (e: React.FormEvent) => {
+
+  const handleSendReply = async (e: any) => {
     e.preventDefault();
-    // Simulate API call
-    toast({
-      title: "Reply sent",
-      description: "Your message has been sent to the support team.",
-    });
+    setIsSubmitting(true);
+    try {
+      // Get JWT token from the authentication context
+      const token = localStorage.getItem("jwtToken"); // Assuming the token is stored in localStorage
+
+      // Make the API call with the token in the headers
+      const response = await axios.post(`/support-requests/${request._id}/comment`, { text: reply }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        toast({
+          title: "Reply Sent successfully",
+          description: "We'll let the authorities know about your reply.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Submission Error",
+        description: "There was an issue submitting your reply. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
     setReply("");
   };
 
@@ -89,15 +114,21 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="font-medium mb-2">Your Address</h3>
+                    <h3 className="font-medium mb-2">Accused&apos;s Name</h3>
                     <p className="text-muted-foreground">
-                      {request.userAddress}
+                      {request.accusedName}
                     </p>
                   </div>
                   <div>
                     <h3 className="font-medium mb-2">Accused&apos;s Address</h3>
                     <p className="text-muted-foreground">
                       {request.accusedAddress}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-2">Your Address</h3>
+                    <p className="text-muted-foreground">
+                      {request.userAddress}
                     </p>
                   </div>
                 </div>
@@ -137,10 +168,10 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {request.messages.map((message) => (
+                  {request.comments.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex items-start gap-4 p-4 rounded-lg ${message.sender === "Admin"
+                      className={`flex items-start gap-4 p-4 rounded-lg ${message.sender === "admin"
                         ? "bg-muted/50"
                         : "bg-primary/10"
                         }`}
@@ -160,7 +191,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                     </div>
                   ))}
 
-                  {request.messages.length === 0 && (
+                  {request.comments.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
                       No messages yet. Start the conversation by sending a message below.
                     </p>
@@ -175,7 +206,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                     />
                     <Button type="submit" className="bg-primary hover:bg-primary/90">
                       <Send className="mr-2 h-4 w-4" />
-                      Send Reply
+                      {isSubmitting ? "Sending..." : "Send Reply"}
                     </Button>
                   </form>
                 </div>
@@ -191,13 +222,13 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium mb-1.5">Request ID</h3>
-                  <p className="text-muted-foreground">{request.id}</p>
+                  <p className="text-muted-foreground">{request._id}</p>
                 </div>
 
                 <div>
                   <h3 className="text-sm font-medium mb-1.5">Category</h3>
                   <p className="capitalize text-muted-foreground">
-                    {request.type.replace("_", " ")}
+                    {request.harassmentType.replace("_", " ")}
                   </p>
                 </div>
 
@@ -206,7 +237,7 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-red-500" />
                     <p className="capitalize text-muted-foreground">
-                      {request.priority}
+                      {request.severityLevel}
                     </p>
                   </div>
                 </div>
@@ -222,10 +253,12 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                   If you&apos;re in immediate danger, please contact emergency services:
                 </p>
                 <div className="text-lg font-bold text-primary text-center">
-                  911
+                  112
                 </div>
                 <Button className="w-full" variant="outline">
-                  View Safety Resources
+                  <Link href="https://shebox.wcd.gov.in/">
+                    View Safety Resources
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
