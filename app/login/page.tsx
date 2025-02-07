@@ -92,31 +92,33 @@ export default function LoginPage() {
 
           {!showVerification ? (
             <form onSubmit={handleSendCode} className="space-y-6">
-              <div className="flex flex-row w-full justify-between gap-1">
-                <div className="space-y-2 w-1/6">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Phone Number
-                  </label>
-                  <Input
-                    id="countrycode"
-                    type="tel"
-                    placeholder="+91"
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                </div>
-                <div className="pt-8 mt-6 w-5/6">
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="h-12"
-                    required
-                  />
+              < div className="flex flex-col w-full justify-between gap-3">
+                <label htmlFor="phone" className="text-sm font-medium">
+                  Phone Number
+                </label>
+                <div className="flex flex-row w-full justify-between gap-1">
+                  <div className="space-y-2 w-1/6">
+                    <Input
+                      id="countrycode"
+                      type="tel"
+                      placeholder="+91"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="h-12"
+                      required
+                    />
+                  </div>
+                  <div className=" w-5/6">
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="h-12"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90">
