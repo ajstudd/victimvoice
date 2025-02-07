@@ -8,9 +8,11 @@ import { Shield, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import Image from "next/image";
+import { count } from "console";
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const history = useRouter();
@@ -21,7 +23,7 @@ export default function LoginPage() {
     const response = await fetch('/auth/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phoneNumber })
+      body: JSON.stringify({ phoneNumber: `${countryCode}${phoneNumber}` })
     });
 
     const data = await response.json();
@@ -90,19 +92,32 @@ export default function LoginPage() {
 
           {!showVerification ? (
             <form onSubmit={handleSendCode} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium">
-                  Phone Number
-                </label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="h-12"
-                  required
-                />
+              <div className="flex flex-row w-full justify-between gap-1">
+                <div className="space-y-2 w-1/6">
+                  <label htmlFor="phone" className="text-sm font-medium">
+                    Phone Number
+                  </label>
+                  <Input
+                    id="countrycode"
+                    type="tel"
+                    placeholder="+91"
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="h-12"
+                    required
+                  />
+                </div>
+                <div className="pt-8 mt-6 w-5/6">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="h-12"
+                    required
+                  />
+                </div>
               </div>
               <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90">
                 Send Verification Code
