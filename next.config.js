@@ -10,7 +10,7 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
-        destination: 'https://victim-voice-api.onrender.com/:path*',
+        destination: 'https://proactiveindia-e5f7bnc3gzedbzg4.centralindia-01.azurewebsites.net/:path*',
       },
     ];
   },
