@@ -40,7 +40,7 @@ export default function AboutPage() {
             <div className="space-y-6 animate-fade-in [animation-delay:200ms]">
               <h2 className="text-3xl font-bold">Our Mission</h2>
               <p className="text-muted-foreground">
-                VictimVoice was created with a singular purpose: to provide a safe haven for 
+                VictimVoice Network was created with a singular purpose: to provide a safe haven for 
                 those who have experienced abuse or harassment. We believe that every voice 
                 deserves to be heard, and every story matters in the journey toward healing 
                 and justice.
