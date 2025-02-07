@@ -42,7 +42,7 @@ export default function LoginPage() {
     const response = await fetch('/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phoneNumber, otp: verificationCode })
+      body: JSON.stringify({ phoneNumber: `${countryCode}${phoneNumber}`, otp: verificationCode })
     });
 
     const data = await response.json();
