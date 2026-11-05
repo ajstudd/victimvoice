@@ -38,18 +38,18 @@ export default function Home() {
                 Your Voice Matters
               </h1>
               <p className="text-xl text-muted-foreground">
-                A safe and anonymous platform for survivors to share their stories and seek support.
-                We're here to listen, protect, and help you take action.
+                A private place to ask for support and choose what you share.
+                We&apos;re here to listen, protect, and help you take action.
               </p>
               <div className="flex gap-4 pt-4">
                 <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
                   <Link href="/login" className="group">
-                    Share Your Story
+                    Ask for support
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/about">Learn More</Link>
+                  <Link href="/dashboard">My support conversations</Link>
                 </Button>
               </div>
             </div>
@@ -70,16 +70,16 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 mb-24">
             <div className="feature-card animate-scale-in [animation-delay:400ms]">
               <Shield className="h-12 w-12 text-primary mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Anonymous Reporting</h2>
+              <h2 className="text-xl font-semibold mb-2">Private support requests</h2>
               <p className="text-muted-foreground">
-                Share your story safely and securely, knowing your identity is protected
+                Choose what to share with supervisors and approved, assigned volunteers.
               </p>
             </div>
             <div className="feature-card animate-scale-in [animation-delay:600ms]">
               <Heart className="h-12 w-12 text-primary mb-4" />
               <h2 className="text-xl font-semibold mb-2">Support Network</h2>
               <p className="text-muted-foreground">
-                Connect with trained volunteers who are here to support and guide you
+                Continue your case, share evidence, and discuss the next step with your assigned team.
               </p>
             </div>
             <div className="feature-card animate-scale-in [animation-delay:800ms]">
@@ -94,7 +94,7 @@ export default function Home() {
           <div className="text-center max-w-2xl mx-auto animate-fade-in [animation-delay:1000ms]">
             <h2 className="text-3xl font-bold mb-6">Ready to Take the First Step?</h2>
             <p className="text-muted-foreground mb-8">
-              Your journey to healing starts here. We're committed to providing a safe space
+              Your journey to healing starts here. We&apos;re committed to providing a safe space
               where your voice can be heard and your story can make a difference.
             </p>
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
@@ -109,7 +109,7 @@ export default function Home() {
         <footer className="mt-24 text-center text-sm text-muted-foreground animate-fade-in [animation-delay:1200ms]">
           <p>© {new Date().getFullYear()} VictimVoice. All rights reserved.</p>
           <p className="mt-2">
-            If you're in immediate danger, please call your local emergency services immediately.
+            If you&apos;re in immediate danger, please call your local emergency services immediately.
           </p>
         </footer>
       </div>

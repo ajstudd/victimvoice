@@ -4,53 +4,59 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios"; // Import axios
+import {
+  getSupabase,
+  isSupabaseConfigured,
+  signInWithGoogle,
+  signOut,
+} from "@/lib/supabase";
+import { staffLanding } from "@/lib/support";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { toast } = useToast();
   const router = useRouter();
 
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setBusy(true);
+    setError("");
     try {
-      // Make the API call to the backend
-      const response = await axios.post('/adminlogin', { email, password });
-
-      if (response.data.success) {
-        // Save the JWT token in localStorage
-        localStorage.setItem("adminToken", response.data.token);
-
-        // Show success toast notification
-        toast({
-          title: "Login successful",
-          description: "Welcome back, admin!",
-        });
-
-        // Redirect to the admin dashboard
-        router.push("/admin/dashboard");
-      } else {
-        // Show error toast for invalid credentials
-        toast({
-          title: "Login failed",
-          description: response.data.error || "Invalid credentials",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error logging in:", error);
-
-      // Show error toast for any server or network issues
-      toast({
-        title: "Login failed",
-        description: "Error logging in admin. Please try again.",
-        variant: "destructive",
+      const { error } = await getSupabase().auth.signInWithPassword({
+        email,
+        password,
       });
+      if (error) throw error;
+      const destination = await staffLanding();
+      if (!destination) {
+        await signOut();
+        throw new Error(
+          "This account has not been approved for support access.",
+        );
+      }
+      router.replace(destination);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Sign-in failed. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  const googleLogin = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await signInWithGoogle(true);
+    } catch {
+      setError("Google sign-in could not start. Please try again.");
+      setBusy(false);
     }
   };
 
@@ -63,11 +69,27 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-center mb-2">Admin Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-2">Staff sign-in</h1>
         <p className="text-center text-muted-foreground mb-8">
-          Access the volunteer dashboard
+          For supervisors and separately approved support or emergency
+          responders
         </p>
 
+        {!isSupabaseConfigured && (
+          <p role="status" className="mb-4 text-sm">
+            Sign-in is being set up. Please check back soon.
+          </p>
+        )}
+        <Button
+          className="mb-6 w-full"
+          onClick={googleLogin}
+          disabled={busy || !isSupabaseConfigured}
+        >
+          Continue with Google
+        </Button>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Or use your admin email and password.
+        </p>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
@@ -97,11 +119,20 @@ export default function AdminLoginPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            Login
+          <Button
+            disabled={busy || !isSupabaseConfigured}
+            type="submit"
+            className="w-full bg-primary hover:bg-primary/90"
+          >
+            {busy ? "Signing in…" : "Login"}
           </Button>
         </form>
 
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-destructive">
+            {error}
+          </p>
+        )}
         <div className="mt-6 text-center">
           <Link href="/" className="text-sm text-primary hover:underline">
             Return to home page

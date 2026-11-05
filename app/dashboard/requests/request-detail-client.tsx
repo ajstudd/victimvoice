@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { Shield, ArrowLeft, Send, Clock, AlertCircle, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import axios from "axios";
+import { Comments } from "@/components/comments";
+import { EvidencePanel } from "@/components/evidence-panel";
+import { SupportConsent } from "@/components/support-consent";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -26,42 +24,6 @@ const statusColors = {
 };
 
 export function RequestDetailClient({ request }: { request: RequestType }) {
-  const [reply, setReply] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
-
-  const handleSendReply = async (e: any) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      // Get JWT token from the authentication context
-      const token = localStorage.getItem("jwtToken"); // Assuming the token is stored in localStorage
-
-      // Make the API call with the token in the headers
-      const response = await axios.post(`/support-requests/${request._id}/comment`, { text: reply }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 200) {
-        toast({
-          title: "Reply Sent successfully",
-          description: "We'll let the authorities know about your reply.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Submission Error",
-        description: "There was an issue submitting your reply. Please try again later.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-    setReply("");
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b">
@@ -167,49 +129,9 @@ export function RequestDetailClient({ request }: { request: RequestType }) {
                 <CardTitle>Messages</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {request.comments.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex items-start gap-4 p-4 rounded-lg ${message.sender === "admin"
-                        ? "bg-muted/50"
-                        : "bg-primary/10"
-                        }`}
-                    >
-                      <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">{message.sender}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {message.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground">
-                          {message.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                  {request.comments.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">
-                      No messages yet. Start the conversation by sending a message below.
-                    </p>
-                  )}
-
-                  <form onSubmit={handleSendReply} className="space-y-4">
-                    <Textarea
-                      placeholder="Type your reply..."
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                    <Button type="submit" className="bg-primary hover:bg-primary/90">
-                      <Send className="mr-2 h-4 w-4" />
-                      {isSubmitting ? "Sending..." : "Send Reply"}
-                    </Button>
-                  </form>
-                </div>
+                <Comments requestId={request._id} />
+                <SupportConsent key={`consent:${request._id}`} requestId={request._id} />
+                <EvidencePanel key={`evidence:${request._id}`} requestId={request._id} owner />
               </CardContent>
             </Card>
           </div>

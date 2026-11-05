@@ -1,15 +1,16 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { RequestDetailClient } from './request-detail-client';
 import { useAuth } from '@/hooks/useAuth';
-import axios from 'axios';
-import { usePathname, useSearchParams } from "next/navigation";
+import { getRequest } from '@/lib/requests';
+import { useSearchParams } from "next/navigation";
 import { RequestType } from '@/lib/types';
-import { useParams } from 'next/navigation'; // Import useParams from next/navigation
 
 export default function RequestDetail() {
-  const params = useParams();
-  const pathname = usePathname();
+  return <Suspense fallback={<div>Loading request…</div>}><RequestDetailContent /></Suspense>;
+}
+
+function RequestDetailContent() {
   const searchParams = useSearchParams();
   const queries = Object.fromEntries(searchParams.entries());
   const { id } = queries; // Dynamically fetch the 'id' from URL params using useParams
@@ -19,24 +20,24 @@ export default function RequestDetail() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated || !id) return; // Ensure 'id' exists before making the API call
+    if (!isAuthenticated) return;
+    if (!id) { setError('No request ID provided.'); setLoading(false); return; }
 
+    let active = true;
+    setLoading(true); setError(null);
     const fetchRequestData = async () => {
       try {
-        const response = await axios.get(`/support-requests/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
-          },
-        });
-        setRequest(response.data);
+        const data = await getRequest(id);
+        if (active) setRequest(data);
       } catch (err) {
-        setError('Failed to load request');
+        if (active) setError('Failed to load request');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchRequestData();
+    return () => { active = false; };
   }, [isAuthenticated, id]); // Dependency on 'id' from useParams
 
   if (!isAuthenticated) return null;

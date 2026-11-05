@@ -1,0 +1,5 @@
+project_id = "victim-voice"
+[functions.sos]
+verify_jwt = false
+[functions.sos-callback]
+verify_jwt = false

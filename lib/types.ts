@@ -10,6 +10,8 @@ export interface RequestType {
   description: string;
   userAddress: string;
   phone: string;
+  email: string;
+  commentCount: number;
   accusedPhone : string;
   accusedName: string;
   accusedAddress: string;
@@ -18,7 +20,7 @@ export interface RequestType {
     url: string;
   }>;
   comments: Array<{
-    id: number;
+    id: string;
     sender: 'admin' | 'user';
     content: string;
     timestamp: string;

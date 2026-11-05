@@ -97,7 +97,7 @@ export default function AboutPage() {
         <footer className="mt-16 text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} VictimVoice. All rights reserved.</p>
           <p className="mt-2">
-            If you're in immediate danger, please call your local emergency services immediately.
+            If you&apos;re in immediate danger, please call your local emergency services immediately.
           </p>
         </footer>
       </div>

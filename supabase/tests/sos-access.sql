@@ -1,0 +1,101 @@
+-- Fictional local fixtures only. Never sends SMS or push.
+begin;
+create function public.sos_assert(ok boolean,msg text) returns void language plpgsql as $$begin if ok is distinct from true then raise exception 'ASSERTION FAILED: %',msg;end if;end$$;
+create function public.sos_denied(query text) returns void language plpgsql as $$begin begin execute query;exception when others then return;end;raise exception 'Expected access denial: %',query;end$$;
+insert into auth.users(id,email) values
+ ('00000000-0000-0000-0000-000000000041','owner@example.test'),
+ ('00000000-0000-0000-0000-000000000042','supervisor@example.test'),
+ ('00000000-0000-0000-0000-000000000043','responder@example.test'),
+ ('00000000-0000-0000-0000-000000000044','outsider@example.test'),
+ ('00000000-0000-0000-0000-000000000045','police@example.test');
+insert into public.admin_users values('00000000-0000-0000-0000-000000000042');
+set local role anon;
+select public.sos_denied($q$select public.vv_sos_list()$q$);
+select public.sos_denied($q$select * from public.vv_sos_events$q$);
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000041',true);
+select public.vv_sos_start('10000000-0000-0000-0000-000000000041','Fictional owner','[{"id":"20000000-0000-0000-0000-000000000041","name":"Fictional contact","phone":"+919999999991"}]','bhopal',true,true,true,jsonb_build_object('latitude',23.25,'longitude',77.4,'timestamp',extract(epoch from now()-interval '1 second')*1000,'accuracy',20));
+select public.sos_assert((public.vv_sos_read('10000000-0000-0000-0000-000000000041')->>'offers')::int=0,'Unconfigured pilot geography sends no responder offer');
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000041')->>'routing'='no_verified_route','No fabricated police routing');
+select public.vv_sos_native_result('10000000-0000-0000-0000-000000000041','20000000-0000-0000-0000-000000000041','unknown',true);
+select public.sos_denied($q$select public.vv_sos_claim_job('sms')$q$);
+select public.sos_denied($q$select public.vv_sos_cleanup()$q$);
+select public.sos_denied($q$insert into public.vv_sos_jobs(event_id,kind) values('10000000-0000-0000-0000-000000000041','sms')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000044',true);
+select public.sos_denied($q$select public.vv_sos_read('10000000-0000-0000-0000-000000000041')$q$);
+select public.sos_denied($q$select public.vv_sos_close('10000000-0000-0000-0000-000000000041','cancelled')$q$);
+select public.sos_denied($q$select public.vv_sos_approve('00000000-0000-0000-0000-000000000044',true)$q$);
+select public.sos_denied($q$select public.vv_sos_start('10000000-0000-0000-0000-000000000041','Hijack','[]','tripura',true,true,true)$q$);
+reset role;
+select public.sos_assert((select count(*)=0 from public.vv_sos_jobs where kind='sms'),'Unknown native outcome cannot enqueue fallback');
+-- Applicants have no emergency access until explicit approval.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000043',true);
+select public.vv_sos_apply('bhopal','Fictional volunteer');
+select public.sos_denied($q$select public.vv_sos_duty(true,23.251,77.401)$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000045',true);
+select public.vv_sos_apply('bhopal','Fictional officer');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000042',true);
+select public.vv_sos_set_area('bhopal','{"type":"Polygon","coordinates":[[[77,23],[78,23],[78,24],[77,24],[77,23]]]}','https://example.test/fictional-boundary',true);
+select public.vv_sos_set_area('bhopal','{"type":"Polygon","coordinates":[[[77,23],[78,23],[78,24],[77,24],[77,23]]]}','https://example.test/fictional-agency',true,'30000000-0000-0000-0000-000000000041','Fictional receiving agency');
+select public.vv_sos_approve('00000000-0000-0000-0000-000000000043',true);
+select public.vv_sos_approve('00000000-0000-0000-0000-000000000045',true,'police','30000000-0000-0000-0000-000000000041');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000043',true);
+select public.vv_sos_duty(true,23.251,77.401);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000045',true);
+select public.vv_sos_duty(true,23.251,77.401);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000041',true);
+select public.vv_sos_start('10000000-0000-0000-0000-000000000042','Fictional owner','[{"id":"20000000-0000-0000-0000-000000000041","name":"Fictional contact","phone":"+919999999991"}]','bhopal',true,true,true,jsonb_build_object('latitude',23.25,'longitude',77.4,'timestamp',extract(epoch from now()-interval '1 second')*1000,'accuracy',20),'+919999999990');
+select public.sos_assert((public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'offers')::int=2,'One eligible volunteer and one police recipient');
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'routing'='offered','Verified full-accuracy jurisdiction routes correctly');
+-- Retrying the same ID never rematches or creates another event.
+select public.vv_sos_start('10000000-0000-0000-0000-000000000042','Changed name','[]','tripura',true,true,true);
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'alias'='Fictional owner','Incident identity is immutable across retries');
+select public.vv_sos_native_result('10000000-0000-0000-0000-000000000042','20000000-0000-0000-0000-000000000041','failed',true);
+select public.vv_sos_native_result('10000000-0000-0000-0000-000000000042','20000000-0000-0000-0000-000000000041','failed',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000043',true);
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'latitude' is null,'No precise location before acceptance');
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'alias' is null,'No identity before acceptance');
+select public.vv_sos_accept('10000000-0000-0000-0000-000000000042');
+select public.sos_assert((public.vv_sos_read('10000000-0000-0000-0000-000000000042')->>'latitude')::numeric=23.25,'Accepted authorized responder can see shared position');
+select public.sos_denied($q$select * from public.vv_sos_recipients$q$);
+reset role;
+select public.sos_assert((select count(*)=1 from public.vv_sos_jobs where kind='sms'),'Repeated failure reports create one SMS job');
+set local role service_role;
+select (public.vv_sos_claim_job('sms')->>'job_id') job_id \gset
+select public.sos_assert(public.vv_sos_claim_job('sms') is null,'Claiming is exclusive; no second provider attempt');
+select public.vv_sos_delivery(:'job_id','SM00000000000000000000000000000041','delivered');
+select public.vv_sos_finish_job(:'job_id','accepted','SM00000000000000000000000000000041');
+select public.vv_sos_delivery(:'job_id','SM00000000000000000000000000000041','undelivered');
+reset role;
+select public.sos_assert((select state='relay_delivered' from public.vv_sos_recipients where event_id='10000000-0000-0000-0000-000000000042'),'Delivery confirmation survives late send/failed callbacks');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000042',true);
+select public.vv_sos_approve('00000000-0000-0000-0000-000000000043',false);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000043',true);
+select public.sos_denied($q$select public.vv_sos_read('10000000-0000-0000-0000-000000000042')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000042',true);
+select public.vv_sos_set_area('bhopal','{"type":"Polygon","coordinates":[[[77,23],[78,23],[78,24],[77,24],[77,23]]]}','https://example.test/fictional-second-agency',true,'30000000-0000-0000-0000-000000000042','Fictional overlapping agency');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000041',true);
+select public.vv_sos_start('10000000-0000-0000-0000-000000000043','Fictional owner','[{"id":"20000000-0000-0000-0000-000000000041","name":"Fictional contact","phone":"+919999999991"}]','bhopal',true,false,true,jsonb_build_object('latitude',23.25,'longitude',77.4,'timestamp',extract(epoch from now()-interval '1 second')*1000,'accuracy',20));
+select public.sos_assert(public.vv_sos_read('10000000-0000-0000-0000-000000000043')->>'routing'='ambiguous_jurisdiction','Overlapping agency boundaries do not silently choose a police recipient');
+select public.vv_sos_native_result('10000000-0000-0000-0000-000000000043','20000000-0000-0000-0000-000000000041','unavailable',true);
+select public.vv_sos_close('10000000-0000-0000-0000-000000000043','cancelled');
+select public.sos_denied($q$select public.vv_sos_native_result('10000000-0000-0000-0000-000000000043','20000000-0000-0000-0000-000000000041','failed',true)$q$);
+select public.sos_denied($q$select public.vv_sos_start('10000000-0000-0000-0000-000000000044','Over quota','[]','bhopal',true,false,false)$q$);
+reset role;
+set local role service_role;
+select public.sos_assert(public.vv_sos_claim_job('sms') is null,'Cancelled pending SMS cannot dispatch');
+reset role;
+select public.sos_assert((select count(*)=3 from public.vv_sos_regions),'All three requested pilot regions present');
+select public.sos_assert((select boundary is null and not volunteer_enabled from public.vv_sos_regions where id='tripura'),'Unreviewed statewide coverage stays disabled');
+update public.vv_sos_events set created_at=now()-interval '8 days' where id='10000000-0000-0000-0000-000000000041';
+update public.vv_sos_responders set duty_until=now()-interval '1 minute' where user_id='00000000-0000-0000-0000-000000000045';
+set local role service_role;
+select public.vv_sos_cleanup();
+reset role;
+select public.sos_assert(not exists(select 1 from public.vv_sos_events where id='10000000-0000-0000-0000-000000000041'),'Old SOS contact/location snapshots are removed');
+select public.sos_assert(not exists(select 1 from public.vv_sos_recipients where event_id='10000000-0000-0000-0000-000000000041'),'Retention removes dependent recipients');
+select public.sos_assert((select position is null and position_at is null from public.vv_sos_responders where user_id='00000000-0000-0000-0000-000000000045'),'Expired duty clears stored responder location');
+rollback;

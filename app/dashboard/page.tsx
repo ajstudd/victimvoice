@@ -12,14 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
-import { useParams } from 'next/navigation'; // Import useParams from next/navigation
-
-interface DecodedToken {
-  userId?: string;
-}
+import { listRequests, PAGE_SIZE } from "@/lib/requests";
+import { signOut } from "@/lib/supabase";
+import { RequestType } from "@/lib/types";
 
 // Status colors for requests
 const statusColors = {
@@ -31,42 +27,27 @@ const statusColors = {
 
 export default function Dashboard() {
   const isAuthenticated = useAuth();
-  const { id } = useParams();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<RequestType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
 
+  const [page, setPage] = useState(0);
+  const [count, setCount] = useState(0);
+  const [error, setError] = useState("");
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log('isAuthenticated', isAuthenticated)
-      const token = localStorage.getItem("jwtToken");
-      const decode = token ? jwtDecode(token) as DecodedToken : null;
-      const userId = token ? decode?.userId : null;
+    if (!isAuthenticated) return;
+    let active = true;
+    setLoading(true); setError("");
+    listRequests(page).then(result => {
+      if (active) { setRequests(result.requests); setCount(result.count); }
+    }).catch(() => { if (active) setError("Requests could not load. Please refresh to try again."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [isAuthenticated, page]);
 
-      if (userId) {
-        // Use Axios to fetch support requests
-        axios
-          .get(`/support-requests/user/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`, // Add Authorization header if required
-            },
-          })
-          .then((response) => {
-            setRequests(response.data); // Set the fetched requests
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.log('error', error);
-            console.error("Error fetching support requests:", error);
-            setLoading(false);
-          });
-      }
-    }
-  }, [isAuthenticated]);
-
-  const logout = () => {
-    localStorage.removeItem("jwtToken");
-    window.location.href = "/login";
+  const logout = async () => {
+    try { await signOut(); window.location.href = "/login"; }
+    catch { setError("Sign-out failed. Please try again."); }
   };
 
   if (!isAuthenticated) return null;
@@ -98,9 +79,10 @@ export default function Dashboard() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6">
+          {error && <p role="alert" className="text-destructive">{error}</p>}
           {loading ? (
             <p>Loading requests...</p>
-          ) : (
+          ) : !error ? (
             <>
               {requests.length > 0 ? (
                 requests.map((request) => (
@@ -133,16 +115,16 @@ export default function Dashboard() {
                             <AlertCircle className="h-4 w-4 text-muted-foreground" />
                             <span className="capitalize">Priority: {request.severityLevel}</span>
                           </div>
-                          {request.comments.length > 0 && (
+                          {request.commentCount > 0 && (
                             <div className="flex items-center gap-2">
                               <MessageCircle className="h-4 w-4 text-primary" />
-                              <span>{request.comments.length} new messages</span>
+                              <span>{request.commentCount} messages</span>
                             </div>
                           )}
                         </div>
                         <div className="flex justify-between items-center pt-4">
                           <p className="text-sm text-muted-foreground">
-                            Last update: {request.comments.length > 0 ? request.comments[request.comments.length - 1].content : "No updates"}
+                            Open your request to read updates.
                           </p>
                           <Button asChild>
                             <Link href={`/dashboard/requests?id=${request._id}`}>
@@ -172,7 +154,12 @@ export default function Dashboard() {
                 </Card>
               )}
             </>
-          )}
+          ) : null}
+        </div>
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <Button variant="outline" disabled={loading || page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
+          <span className="text-sm">Page {page + 1} of {Math.max(1, Math.ceil(count / PAGE_SIZE))}</span>
+          <Button variant="outline" disabled={loading || (page + 1) * PAGE_SIZE >= count} onClick={() => setPage(page + 1)}>Next</Button>
         </div>
       </main>
     </div>

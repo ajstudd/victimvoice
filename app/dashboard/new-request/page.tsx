@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+import { createRequest } from "@/lib/requests";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,8 +53,8 @@ export default function NewRequest() {
     e.preventDefault();
 
     // Basic form validation
-    const { userAddress, accusedAddress, accusedName, harassmentType, severityLevel, description, screenshotEvidence, videoEvidence, accusedPhone } = formData;
-    if (!userAddress || !accusedAddress || !accusedName || !harassmentType || !severityLevel || !description || !screenshotEvidence || !videoEvidence) {
+    const { userAddress, accusedAddress, accusedName, harassmentType, severityLevel, description } = formData;
+    if (!userAddress || !accusedAddress || !accusedName || !harassmentType || !severityLevel || !description) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -65,27 +65,16 @@ export default function NewRequest() {
     setIsSubmitting(true);
 
     try {
-      // Get JWT token from the authentication context
-      const token = localStorage.getItem("jwtToken"); // Assuming the token is stored in localStorage
-
-      // Make the API call with the token in the headers
-      const response = await axios.post("/support-requests", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await createRequest(formData);
+      toast({
+        title: "Request submitted successfully",
+        description: "We'll review your case and respond as soon as possible.",
       });
-
-      if (response.status === 200) {
-        toast({
-          title: "Request submitted successfully",
-          description: "We'll review your case and respond as soon as possible.",
-        });
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (error) {
       toast({
         title: "Submission Error",
-        description: "There was an issue submitting your request. Please try again later.",
+        description: error instanceof Error ? error.message : "There was an issue submitting your request. Please try again later.",
       });
     } finally {
       setIsSubmitting(false);
@@ -141,7 +130,7 @@ export default function NewRequest() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Accused&apos;s Phone</label>
-                <Input name="accusedPhone" placeholder="Enter the accused's phone number" required onChange={handleChange} />
+                <Input name="accusedPhone" maxLength={40} placeholder="Enter the accused's phone number (optional)" onChange={handleChange} />
               </div>
 
 
@@ -179,19 +168,19 @@ export default function NewRequest() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Textarea name="description" placeholder="Please describe the situation in detail..." className="min-h-[150px]" required onChange={handleChange} />
+                <Textarea maxLength={20000} name="description" placeholder="Please describe the situation in detail..." className="min-h-[150px]" required onChange={handleChange} />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Evidence Links</label>
+                <label className="text-sm font-medium">Evidence Links (optional)</label>
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Screenshots of conversations (URLs)</p>
-                    <Input name="screenshotEvidence" placeholder="Enter URL to screenshot evidence" onChange={handleChange} />
+                    <Input type="url" maxLength={2048} name="screenshotEvidence" placeholder="Enter URL to screenshot evidence" onChange={handleChange} />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Video evidence (URLs)</p>
-                    <Input name="videoEvidence" placeholder="Enter URL to video evidence" onChange={handleChange} />
+                    <Input type="url" maxLength={2048} name="videoEvidence" placeholder="Enter URL to video evidence" onChange={handleChange} />
                   </div>
                 </div>
               </div>

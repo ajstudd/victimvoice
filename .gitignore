@@ -33,3 +33,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Isolated local visual QA output
+/.next-qa/
+
+# SOS provider secrets stay server-side.
+supabase/functions/.env
+supabase/functions/.env.local
+
+# Local agent state and credentials are not release source.
+**/.claude/
+**/.codex/
+**/.agents/
+**/.impeccable/
+.env
+.env.*
+!.env.example

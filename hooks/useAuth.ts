@@ -1,41 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {jwtDecode} from 'jwt-decode';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import { staffRole } from '@/lib/support';
 
-// Define an interface for the token payload structure
-interface DecodedToken {
-  exp?: number;
-}
-
-export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export function useAuth(admin = false) {
+  const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
-
   useEffect(() => {
-    const token = localStorage.getItem('jwtToken');
-
-    if (token) {
-      try {
-        const decoded: DecodedToken = jwtDecode(token);
-        const isTokenValid = decoded.exp ? decoded.exp * 1000 > Date.now() : false;
-
-        if (isTokenValid) {
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem('jwtToken');
-          setIsAuthenticated(false);
-          router.push('/login'); // Redirect to login page if token is expired
-        }
-      } catch (error) {
-        console.error('Token verification failed', error);
-        setIsAuthenticated(false);
-        router.push('/login');
-      }
-    } else {
-      setIsAuthenticated(false);
-      router.push('/login');
+    let active = true;
+    const login = admin ? '/admin/login' : '/login';
+    if (!isSupabaseConfigured) {
+      router.replace(login);
+      return;
     }
-  }, [router]);
-
-  return isAuthenticated;
+    const supabase = getSupabase();
+    const check = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        const allowed = !error && Boolean(data.user) && (!admin || (await staffRole()) !== 'none');
+        if (!active) return;
+        setAuthenticated(allowed);
+        if (!allowed) router.replace(login);
+      } catch {
+        if (active) {
+          setAuthenticated(false);
+          router.replace(login);
+        }
+      }
+    };
+    void check();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Avoid making auth requests while its state-change callback holds the lock.
+      setTimeout(() => { if (active) void check(); }, 0);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [admin, router]);
+  return authenticated;
 }
