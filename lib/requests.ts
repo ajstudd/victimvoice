@@ -75,20 +75,14 @@ export async function updateStatus(id: string, status: RequestType['status']) {
 }
 
 export interface NewRequestData {
-  userAddress: string; accusedAddress: string; accusedName: string; accusedPhone: string;
-  harassmentType: string; severityLevel: string; description: string;
-  screenshotEvidence: string; videoEvidence: string;
+  description: string; harassmentType: string; severityLevel: string; allowVolunteers: boolean;
 }
+// Only what the person chooses to say: no address or accused details are required.
 export async function createRequest(form: NewRequestData) {
-  for (const value of [form.screenshotEvidence, form.videoEvidence]) {
-    if (value && !/^https?:$/.test(new URL(value).protocol)) throw new Error('Evidence links must use HTTP or HTTPS.');
-  }
-  const { error } = await getSupabase().from('support_requests').insert({
-    user_address: form.userAddress.trim(), accused_address: form.accusedAddress.trim(),
-    accused_name: form.accusedName.trim(), accused_phone: form.accusedPhone.trim(),
-    harassment_type: form.harassmentType, severity_level: form.severityLevel,
-    description: form.description.trim(), screenshot_url: form.screenshotEvidence.trim() || null,
-    video_url: form.videoEvidence.trim() || null,
-  });
+  const { data, error } = await getSupabase().from('support_requests').insert({
+    description: form.description.trim(), harassment_type: form.harassmentType,
+    severity_level: form.severityLevel, allow_volunteer_support: form.allowVolunteers,
+  }).select('id').single();
   if (error) throw error;
+  return data.id as string;
 }

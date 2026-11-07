@@ -23,18 +23,19 @@ export function SupportConsent({ requestId }: { requestId: string }) {
     };
   }, [requestId]);
   return (
-    <section className="evidence-upload">
-      <h4>Your support team</h4>
-      <p className="support-helper">
-        Supervisors can read requests you submit. You decide whether approved
-        volunteers assigned to this case can help. Withdrawing consent
-        immediately removes their server access and cancels assignments. Private
-        notes and your circle are never included.
-      </p>
-      <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
+    <section aria-label="Who can see this conversation">
+      <h2>Who can see this</h2>
+      <label className="vv-toggle" style={{ borderTop: 0, paddingTop: 0 }}>
+        <span>
+          <strong>Let trained volunteers help</strong>
+          {allowed
+            ? "On. Supervisors and a volunteer they assign can read this conversation and its files."
+            : "Off. Only supervisors can read this conversation and its files."}
+        </span>
         <input
           type="checkbox"
-          style={{ width: 18, minHeight: 18, margin: 0 }}
+          role="switch"
+          className="vv-switch"
           checked={allowed}
           disabled={!ready || busy}
           onChange={async (e) => {
@@ -54,10 +55,13 @@ export function SupportConsent({ requestId }: { requestId: string }) {
             }
           }}
         />
-        Allow assigned volunteers to support this case
       </label>
+      <p className="vv-note" style={{ marginTop: 12 }}>
+        Volunteers never see your email or phone. Turning this off removes their
+        access straight away.
+      </p>
       {error && (
-        <p role="alert" className="support-error">
+        <p role="alert" className="vv-error">
           {error}
         </p>
       )}

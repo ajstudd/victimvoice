@@ -7,19 +7,30 @@ import { Button } from "@/components/ui/button";
 export function Comments({
   requestId,
   staff = false,
+  onSent,
 }: {
   requestId: string;
   staff?: boolean;
+  onSent?: () => void;
 }) {
-  return <Conversation key={requestId} requestId={requestId} staff={staff} />;
+  return (
+    <Conversation
+      key={requestId}
+      requestId={requestId}
+      staff={staff}
+      onSent={onSent}
+    />
+  );
 }
 
 function Conversation({
   requestId,
   staff,
+  onSent,
 }: {
   requestId: string;
   staff: boolean;
+  onSent?: () => void;
 }) {
   const [data, setData] = useState<
     (Awaited<ReturnType<typeof listComments>> & { page: number }) | null
@@ -62,16 +73,18 @@ function Conversation({
   const loading = data?.page !== page && !syncError;
   useEffect(() => {
     const node = history.current;
-    if (staff && node && nearBottom.current) node.scrollTop = node.scrollHeight;
-  }, [data, staff]);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+    if (node && nearBottom.current) node.scrollTop = node.scrollHeight;
+  }, [data]);
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
     if (!text.trim() || sending || accessChanged) return;
     setSending(true);
     setError("");
     try {
       await addComment(requestId, text);
       setText("");
+      nearBottom.current = true;
+      onSent?.();
       if (page === 0) refresh();
       else setPage(0);
     } catch {
@@ -82,9 +95,6 @@ function Conversation({
   }
   return (
     <div className="case-chat">
-      <p className="case-chat-caption">
-        Private conversation · Replies update automatically while open.
-      </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -112,16 +122,17 @@ function Conversation({
         ) : (
           <>
             {data?.page === page && comments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No messages yet. Send a message below.
+              <p className="case-chat-caption">
+                {staff
+                  ? "No replies yet. The survivor is waiting to hear from the team."
+                  : "Sent. The support team’s reply will appear here — new replies show up automatically while this page is open."}
               </p>
             ) : (
               comments.length > 0 && (
                 <>
-                  <p className="case-chat-caption">
-                    {page === 0 ? "Latest conversation" : "Earlier messages"} ·
-                    Messages run oldest to newest on this page.
-                  </p>
+                  {page > 0 && (
+                    <p className="case-chat-caption">Earlier messages</p>
+                  )}
                   {comments
                     .slice()
                     .reverse()
@@ -139,7 +150,10 @@ function Conversation({
                         </span>
                         <p className="case-chat-bubble">{message.content}</p>
                         <time dateTime={message.timestamp}>
-                          {new Date(message.timestamp).toLocaleString()}
+                          {new Date(message.timestamp).toLocaleString(
+                            undefined,
+                            { dateStyle: "medium", timeStyle: "short" },
+                          )}
                         </time>
                       </div>
                     ))}
@@ -153,15 +167,14 @@ function Conversation({
                   disabled={page === 0}
                   onClick={() => setPage(page - 1)}
                 >
-                  Newer
+                  Newer messages
                 </Button>
-                <span className="text-sm">Page {page + 1}</span>
                 <Button
                   variant="outline"
                   disabled={(page + 1) * COMMENT_PAGE_SIZE >= count}
                   onClick={() => setPage(page + 1)}
                 >
-                  Older
+                  Earlier messages
                 </Button>
               </div>
             )}
@@ -170,7 +183,7 @@ function Conversation({
       </div>
       <form onSubmit={submit} className="case-chat-composer">
         <label htmlFor="reply">
-          {staff ? "Reply to the survivor" : "Your message to the support team"}
+          {staff ? "Reply to the survivor" : "Write a message"}
         </label>
         <textarea
           id="reply"
@@ -181,6 +194,10 @@ function Conversation({
           }
           value={text}
           onChange={(event) => setText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && (event.metaKey || event.ctrlKey))
+              void submit();
+          }}
           maxLength={5000}
           disabled={accessChanged}
           required
@@ -188,15 +205,15 @@ function Conversation({
         <div className="case-chat-composer-footer">
           <span>
             {staff
-              ? "This message is visible to the survivor."
-              : "Visible to your case’s support team."}
+              ? "Visible to the survivor · Ctrl/⌘ + Enter to send"
+              : "Only your support team can read this · Ctrl/⌘ + Enter to send"}
           </span>
           <button
             className="support-primary-button"
             disabled={sending || !text.trim() || accessChanged}
             type="submit"
           >
-            {sending ? "Sending…" : "Send reply"}
+            {sending ? "Sending…" : staff ? "Send reply" : "Send"}
           </button>
         </div>
       </form>

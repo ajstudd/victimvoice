@@ -33,6 +33,7 @@ import {
   supportError,
   supportRpc,
 } from "@/lib/support";
+import { timeAgo } from "@/shared/support-copy";
 import { Comments } from "@/components/comments";
 import { EvidencePanel } from "@/components/evidence-panel";
 import { useConversationSync } from "@/hooks/useConversationSync";
@@ -216,22 +217,32 @@ function WorkspaceSession() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <div className="support-filter">
-            <label htmlFor="queue-status">Show</label>
-            <select
-              id="queue-status"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                setPage(0);
-              }}
-            >
-              <option value="">All accessible cases</option>
-              <option value="pending">Needs response</option>
-              <option value="in_progress">In progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
+          <div
+            className="support-filter-chips"
+            role="radiogroup"
+            aria-label="Show cases"
+          >
+            {(
+              [
+                ["", "All"],
+                ["pending", "Needs response"],
+                ["in_progress", "In progress"],
+                ["resolved", "Resolved"],
+                ["closed", "Closed"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={label}
+                role="radio"
+                aria-checked={status === value}
+                onClick={() => {
+                  setStatus(value);
+                  setPage(0);
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <div className="support-case-list">
             {loading ? (
@@ -252,20 +263,17 @@ function WorkspaceSession() {
                     >
                       {row.severity_level} priority
                     </span>
-                    <time>
-                      {new Date(row.created_at).toLocaleDateString(undefined, {
-                        day: "numeric",
-                        month: "short",
-                      })}
+                    <time dateTime={row.created_at}>
+                      {timeAgo(row.created_at)}
                     </time>
                   </span>
-                  <strong>Case #{row.id.slice(0, 8).toUpperCase()}</strong>
                   <p>{row.description}</p>
                   <span className="support-case-row-bottom">
                     <span className={`support-status status-${row.status}`}>
                       {statusName(row.status)}
                     </span>
                     <span>
+                      #{row.id.slice(0, 8).toUpperCase()}
                       <MessageSquare size={12} />
                       {row.message_count || 0}
                       <Paperclip size={12} />
@@ -597,11 +605,22 @@ function CaseWorkspace({
           </details>
           {tab === "conversation" ? (
             <>
-              <details className="support-original-account">
-                <summary>Survivor’s original request · Read account</summary>
+              <details className="support-original-account" open>
+                <summary>Survivor’s first message</summary>
                 <p className="support-account-text">{row.description}</p>
               </details>
-              <Comments key={id} requestId={id} staff />
+              <Comments
+                key={id}
+                requestId={id}
+                staff
+                onSent={() => {
+                  // A reply means the case is being worked; spare staff a manual status change.
+                  if (row.status === "pending")
+                    void mutate("vv_set_case_status", {
+                      p_status: "in_progress",
+                    });
+                }}
+              />
             </>
           ) : tab === "evidence" ? (
             <EvidencePanel

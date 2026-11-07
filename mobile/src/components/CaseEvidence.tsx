@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Image, AppState, Platform, Linking } from "react-native";
+import { View, Image, AppState, Platform, Linking, Pressable } from "react-native";
 import { useFocusEffect } from "expo-router";
 import * as Picker from "expo-document-picker";
 import * as Crypto from "expo-crypto";
@@ -7,7 +7,7 @@ import { File, Paths } from "expo-file-system";
 import { fetch as expoFetch } from "expo/fetch";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { Button, Field, Notice, T, Row, s, colors } from "./ui";
+import { Button, Field, Notice, T, Row, Icon, s, colors } from "./ui";
 import { supabase, cloudError } from "../lib/supabase";
 import {
   addEvidenceLink,
@@ -40,6 +40,7 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [linkMode, setLinkMode] = useState(false);
   const generation = useRef(0);
   const local = useRef<File | null>(null);
   const objectUrl = useRef<string | null>(null);
@@ -93,7 +94,7 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
       setError(cloudError(e));
     }
   }
-  async function share() {
+  async function share(name: string) {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -106,7 +107,7 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
             : new File(selected.uri).size) ??
           0;
         const mime = selected.mimeType || selected.file?.type || "";
-        validateEvidenceFile(size, mime, label);
+        validateEvidenceFile(size, mime, name);
         const bytes =
           Platform.OS === "web"
             ? await selected.file!.arrayBuffer()
@@ -114,17 +115,18 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
         await uploadEvidence(
           supabase,
           requestId,
-          label,
+          name,
           mime,
           bytes,
           await digest(bytes),
         );
         if (picked.current?.exists) picked.current.delete();
         picked.current = null;
-      } else await addEvidenceLink(supabase, requestId, label, link);
+      } else await addEvidenceLink(supabase, requestId, name, link.trim());
       setSelected(null);
       setLink("");
       setLabel("");
+      setLinkMode(false);
       await refresh();
     } catch (e) {
       setError(cloudError(e));
@@ -213,29 +215,57 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
       clearInterval(timer);
     };
   }, [preview, close]);
+  const linkLabel = () => {
+    try {
+      return new URL(link.trim()).hostname;
+    } catch {
+      return "";
+    }
+  };
+  const ready = selected ? true : Boolean(link.trim());
   return (
     <View style={{ gap: 16 }}>
       <View style={s.between}>
-        <T kind="heading">Shared evidence</T>
-        <Button title="Refresh" tone="outline" onPress={refresh} />
-      </View>
-      <T kind="caption">
-        Only share material you choose. Images, audio or video up to 10 MiB, or
-        a public HTTPS link. Your assigned support team can view submitted
-        evidence. Access is recorded.
-      </T>
-      {items.map((item) => (
-        <Row
-          key={item.id}
-          title={item.label}
-          subtitle={`${item.kind === "link" ? "External link" : evidenceSize(item.byte_size)} · ${item.review_status.replaceAll("_", " ")}`}
-          icon={item.kind === "link" ? "link" : "file"}
-          onPress={() => {
-            if (!busy) void view(item);
+        <T kind="heading">Files & links</T>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Refresh files"
+          onPress={refresh}
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
-      ))}
-      {!items.length && <T>No evidence shared yet.</T>}
+        >
+          <Icon name="refresh-cw" size={18} />
+        </Pressable>
+      </View>
+      {items.length ? (
+        <View>
+          {items.map((item) => (
+            <Row
+              key={item.id}
+              title={item.label}
+              subtitle={`${item.kind === "link" ? "Link" : evidenceSize(item.byte_size)} · Tap to open`}
+              icon={
+                item.kind === "link"
+                  ? "link"
+                  : item.mime_type?.startsWith("image/")
+                    ? "image"
+                    : item.mime_type?.startsWith("video/")
+                      ? "film"
+                      : "music"
+              }
+              onPress={() => {
+                if (!busy) void view(item);
+              }}
+            />
+          ))}
+        </View>
+      ) : (
+        <T>Nothing shared yet. Screenshots, photos, voice notes or links can help the team understand.</T>
+      )}
       {preview && (
         <View style={[s.panel, { backgroundColor: colors.peach }]}>
           <View style={s.between}>
@@ -245,7 +275,7 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
             <Button title="Close" tone="outline" onPress={close} />
           </View>
           <T kind="caption">
-            Private evidence · Case #{requestId.slice(0, 8)} ·{" "}
+            Private file · Case #{requestId.slice(0, 8)} ·{" "}
             {new Date().toLocaleDateString()}
           </T>
           {preview.link ? (
@@ -276,48 +306,101 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
         </View>
       )}
       <View style={[s.panel, { backgroundColor: colors.lilac }]}>
-        <T kind="label">Share with this case</T>
-        <Field
-          label="Evidence label"
-          value={label}
-          onChangeText={setLabel}
-          maxLength={160}
-        />
-        <Button
-          title={selected ? `Selected: ${selected.name}` : "Choose media"}
-          icon="paperclip"
-          tone="outline"
-          onPress={choose}
-          disabled={busy}
-        />
+        <T kind="label">Share something new</T>
         {selected ? (
-          <Button
-            title="Remove selected file"
-            tone="outline"
-            disabled={busy}
-            onPress={() => {
-              if (picked.current?.exists) picked.current.delete();
-              picked.current = null;
-              setSelected(null);
-            }}
-          />
+          <>
+            <View style={[s.row, { alignItems: "center" }]}>
+              <Icon name="file" size={18} />
+              <T kind="label" numberOfLines={1} style={{ flex: 1 }}>
+                {selected.name}
+              </T>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Remove selected file"
+                disabled={busy}
+                onPress={() => {
+                  if (picked.current?.exists) picked.current.delete();
+                  picked.current = null;
+                  setSelected(null);
+                  setLabel("");
+                }}
+                style={{
+                  width: 48,
+                  height: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon name="x" size={18} />
+              </Pressable>
+            </View>
+            <Field
+              label="Name it so you can find it later"
+              value={label}
+              onChangeText={setLabel}
+              maxLength={160}
+            />
+          </>
+        ) : linkMode ? (
+          <>
+            <Field
+              label="Link"
+              value={link}
+              onChangeText={setLink}
+              autoCapitalize="none"
+              keyboardType="url"
+              placeholder="https://"
+              maxLength={2048}
+            />
+            <Field
+              label="Short description (optional)"
+              value={label}
+              onChangeText={setLabel}
+              maxLength={160}
+            />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setLinkMode(false);
+                setLink("");
+              }}
+              style={{ minHeight: 44, justifyContent: "center" }}
+            >
+              <T style={s.link}>Choose a file instead</T>
+            </Pressable>
+          </>
         ) : (
-          <Field
-            label="Or add a public HTTPS link"
-            value={link}
-            onChangeText={setLink}
-            autoCapitalize="none"
-            keyboardType="url"
-            maxLength={2048}
+          <>
+            <Button
+              title="Choose a photo, video or audio file"
+              icon="paperclip"
+              tone="cream"
+              onPress={choose}
+              disabled={busy}
+            />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setLinkMode(true)}
+              style={{ minHeight: 44, justifyContent: "center" }}
+            >
+              <T style={s.link}>Share a link instead</T>
+            </Pressable>
+          </>
+        )}
+        {(selected || linkMode) && (
+          <Button
+            title="Share with support team"
+            disabled={!ready}
+            busy={busy}
+            onPress={() =>
+              void share(label.trim() || selected?.name || linkLabel())
+            }
           />
         )}
-        <Notice text="Submitted originals cannot be edited in the support workspace. Confirm that you want to share this item before continuing." />
-        <Button
-          title="Share this evidence"
-          disabled={!label.trim() || (!selected && !link)}
-          busy={busy}
-          onPress={share}
-        />
+        <T kind="caption">
+          Up to 10 MB each. Your support team can open what you share, and each
+          view is recorded. Shared files can’t be changed afterwards.
+        </T>
       </View>
       {Boolean(error) && <Notice text={error} tone="error" />}
     </View>

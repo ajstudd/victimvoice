@@ -1,61 +1,63 @@
 "use client";
-import { Suspense, useState, useEffect } from 'react';
-import { RequestDetailClient } from './request-detail-client';
-import { useAuth } from '@/hooks/useAuth';
-import { getRequest } from '@/lib/requests';
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { RequestType } from '@/lib/types';
+import { RequestDetailClient } from "./request-detail-client";
+import { useAuth } from "@/hooks/useAuth";
+import { getRequest } from "@/lib/requests";
+import { RequestType } from "@/lib/types";
+import { DashboardShell } from "@/components/dashboard-shell";
 
 export default function RequestDetail() {
-  return <Suspense fallback={<div>Loading request…</div>}><RequestDetailContent /></Suspense>;
+  return (
+    <Suspense fallback={null}>
+      <RequestDetailContent />
+    </Suspense>
+  );
 }
 
 function RequestDetailContent() {
-  const searchParams = useSearchParams();
-  const queries = Object.fromEntries(searchParams.entries());
-  const { id } = queries; // Dynamically fetch the 'id' from URL params using useParams
+  const id = useSearchParams().get("id");
   const isAuthenticated = useAuth();
   const [request, setRequest] = useState<RequestType | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (!id) { setError('No request ID provided.'); setLoading(false); return; }
-
+    if (!id) {
+      setError("No conversation was selected.");
+      setLoading(false);
+      return;
+    }
     let active = true;
-    setLoading(true); setError(null);
-    const fetchRequestData = async () => {
-      try {
-        const data = await getRequest(id);
+    setLoading(true);
+    setError("");
+    getRequest(id)
+      .then((data) => {
         if (active) setRequest(data);
-      } catch (err) {
-        if (active) setError('Failed to load request');
-      } finally {
+      })
+      .catch(() => {
+        if (active) setError("This conversation couldn’t be opened. Please try again.");
+      })
+      .finally(() => {
         if (active) setLoading(false);
-      }
+      });
+    return () => {
+      active = false;
     };
-
-    fetchRequestData();
-    return () => { active = false; };
-  }, [isAuthenticated, id]); // Dependency on 'id' from useParams
+  }, [isAuthenticated, id]);
 
   if (!isAuthenticated) return null;
-
-  // Handle loading state
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  // Handle error state
-  if (error) {
-    return <div>{error}</div>;
-  }
-
-  // Handle no requests case
-  if (!request) {
-    return <div>No requests found.</div>;
-  }
-
-  return <RequestDetailClient request={request} />;
+  if (request && !loading) return <RequestDetailClient request={request} />;
+  return (
+    <DashboardShell back={{ href: "/dashboard", label: "Your conversations" }}>
+      {loading ? (
+        <p role="status">Opening conversation…</p>
+      ) : (
+        <p role="alert" className="vv-error">
+          {error || "This conversation couldn’t be found."}
+        </p>
+      )}
+    </DashboardShell>
+  );
 }

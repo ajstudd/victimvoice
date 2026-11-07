@@ -306,3 +306,7 @@ The guide library uses category and bookmark metadata, tonal icons and bordered 
 Support cases use status badges, chronological left/right conversation bubbles, a fixed reply composer and guarded scrolling. New replies do not clear drafts or force a reader away from older messages. Evidence and Team & privacy remain separate sections. Request drafts are saved explicitly to the encrypted account-specific device vault, never uploaded automatically.
 
 Native captures of this refresh are pending. The browser captures in ../design/mobile-refresh/ verify selected phone-width states, not physical-device delivery, permissions, capture blocking or response reliability.
+
+## Support flow simplification — 7 November 2026
+
+Talk to support is one screen: message, an optional topic, “When would you like a reply?” (worded choices mapped to low/medium/high priority) and the volunteer switch, with what is shared stated directly above **Send to support**. Choosing “As soon as possible” shows an inline Get help prompt instead of permanent warnings. Drafts are still saved only when the user asks. Conversations show plain-language status (`shared/support-copy.ts`, also used by the website), the first message as the opening bubble, and a paperclip in the composer that opens Files. The website’s survivor dashboard uses the same form and wording; it no longer asks for addresses or the accused’s details. Staff replies move a “Needs response” case to “In progress” automatically. Native captures of this change are pending.

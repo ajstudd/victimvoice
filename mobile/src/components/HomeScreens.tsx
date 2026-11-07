@@ -146,20 +146,17 @@ export function Home() {
         />
       </View>
       <View style={[s.panel, { backgroundColor: colors.peach, gap: 14 }]}>
-        <View style={s.between}>
-          <View style={s.row}>
-            <Icon name="message-circle" size={25} />
-            <T kind="heading">Talk to support</T>
-          </View>
-          <Icon name="heart" size={20} />
+        <View style={s.row}>
+          <Icon name="message-circle" size={25} />
+          <T kind="heading">Talk to support</T>
         </View>
         <T color={colors.ink}>
-          You don’t have to find the words all at once. Share a concern, media,
-          or a link.
+          Write to a real person on our support team, in your own words. Share
+          as much or as little as you like.
         </T>
         <Button
-          title="Ask for support"
-          icon="arrow-up-right"
+          title="Start a conversation"
+          icon="edit-3"
           onPress={() => router.push("/request-new")}
         />
         <Pressable
@@ -168,12 +165,15 @@ export function Home() {
           onPress={() => router.push("/requests")}
         >
           <View style={s.between}>
-            <T kind="label">My conversations</T>
-            <Icon name="arrow-right" size={18} />
+            <View style={s.row}>
+              <Icon name="inbox" size={18} />
+              <T kind="label">My conversations</T>
+            </View>
+            <Icon name="chevron-right" size={18} />
           </View>
         </Pressable>
         <T kind="caption">
-          Private support inbox · No guaranteed response time
+          Private · Replies aren’t instant. For danger right now, use Get help.
         </T>
       </View>
       <View style={{ gap: 12 }}>

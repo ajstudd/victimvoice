@@ -90,8 +90,8 @@ function SpaceContent() {
           onPress={() => router.push("/notes")}
         />
         <Row
-          title="My support requests"
-          subtitle="Only information you've chosen to submit"
+          title="My support conversations"
+          subtitle="Messages and files you chose to share"
           icon="message-circle"
           onPress={() => router.push("/requests")}
         />
@@ -102,7 +102,7 @@ function SpaceContent() {
         onPress={() => router.push("/note")}
       />
       <Button
-        title="Ask for support"
+        title="Talk to support"
         tone="outline"
         icon="heart"
         onPress={() => router.push("/request-new")}

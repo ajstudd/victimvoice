@@ -43,6 +43,7 @@ export function EvidencePanel({
   const [label, setLabel] = useState("");
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [linkMode, setLinkMode] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const generation = useRef(0);
   const blobUrl = useRef<string | null>(null);
@@ -101,9 +102,15 @@ export function EvidencePanel({
     if (busy) return;
     setBusy(true);
     setError("");
+    let name = label.trim() || file?.name.slice(0, 160) || "";
+    if (!name) {
+      try {
+        name = new URL(link.trim()).hostname;
+      } catch {}
+    }
     try {
       if (file) {
-        validateEvidenceFile(file.size, file.type, label);
+        validateEvidenceFile(file.size, file.type, name);
         const bytes = await file.arrayBuffer();
         const digest = await crypto.subtle.digest("SHA-256", bytes);
         const hash = Array.from(new Uint8Array(digest), (n) =>
@@ -112,15 +119,17 @@ export function EvidencePanel({
         await uploadEvidence(
           getSupabase(),
           requestId,
-          label,
+          name,
           file.type,
           bytes,
           hash,
         );
-      } else await addEvidenceLink(getSupabase(), requestId, label, link);
+      } else
+        await addEvidenceLink(getSupabase(), requestId, name, link.trim());
       setFile(null);
       setLink("");
       setLabel("");
+      setLinkMode(false);
       if (input.current) input.current.value = "";
       await refresh();
     } catch (e) {
@@ -164,12 +173,15 @@ export function EvidencePanel({
     }
   }
   return (
-    <section className="evidence-panel" aria-label="Shared evidence">
+    <section
+      className="evidence-panel"
+      aria-label={owner ? "Files and links" : "Shared evidence"}
+    >
       <div className="support-section-heading">
         <div>
-          <p className="support-eyebrow">Shared with this case</p>
+          {!owner && <p className="support-eyebrow">Shared with this case</p>}
           <h3>
-            Evidence library{" "}
+            {owner ? "Files & links" : "Evidence library"}{" "}
             <span className="support-count">{items.length}</span>
           </h3>
         </div>
@@ -177,10 +189,12 @@ export function EvidencePanel({
           Refresh
         </button>
       </div>
-      <p className="support-helper">
-        <ShieldCheck size={14} /> Private originals. Access is recorded. Review
-        status does not establish authenticity.
-      </p>
+      {!owner && (
+        <p className="support-helper">
+          <ShieldCheck size={14} /> Private originals. Access is recorded.
+          Review status does not establish authenticity.
+        </p>
+      )}
       {error && (
         <p role="alert" className="support-error">
           {error}
@@ -189,8 +203,12 @@ export function EvidencePanel({
       {!items.length && !error && (
         <div className="support-empty-inline">
           <Paperclip size={24} />
-          <p>No evidence shared yet.</p>
-          <span>Only share material you choose to include in this case.</span>
+          <p>{owner ? "Nothing shared yet." : "No evidence shared yet."}</p>
+          <span>
+            {owner
+              ? "Screenshots, photos, voice notes or links can help the team understand."
+              : "Only material the owner chooses to share appears here."}
+          </span>
         </div>
       )}
       <div className="evidence-grid">
@@ -253,53 +271,87 @@ export function EvidencePanel({
       </div>
       {owner && (
         <div className="evidence-upload">
-          <h4>Share evidence</h4>
-          <p className="support-helper">
-            Images, audio or video up to 10 MiB each, or a public HTTPS link.
-            Your assigned support team can view what you submit. Submitted
-            originals cannot be edited from this workspace.
-          </p>
-          <label>
-            Evidence label
-            <input
-              value={label}
-              maxLength={160}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="For example: messages from 1 November"
-            />
-          </label>
-          <label>
-            Choose media
-            <input
-              ref={input}
-              type="file"
-              accept={EVIDENCE_TYPES.join(",")}
-              disabled={busy || Boolean(link)}
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-          </label>
-          <label>
-            Or share a link
-            <input
-              type="url"
-              value={link}
-              disabled={busy || Boolean(file)}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://…"
-            />
-          </label>
-          {file && (
-            <p className="support-helper">
-              Selected: {file.name} · {evidenceSize(file.size)}
-            </p>
+          <h4>Share something new</h4>
+          {linkMode ? (
+            <>
+              <label>
+                Link
+                <input
+                  type="url"
+                  value={link}
+                  disabled={busy}
+                  onChange={(e) => setLink(e.target.value)}
+                  placeholder="https://…"
+                />
+              </label>
+              <label>
+                Short description <small>(optional)</small>
+                <input
+                  value={label}
+                  maxLength={160}
+                  onChange={(e) => setLabel(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="support-text-button"
+                onClick={() => {
+                  setLinkMode(false);
+                  setLink("");
+                }}
+              >
+                Choose a file instead
+              </button>
+            </>
+          ) : (
+            <>
+              <label>
+                Photo, video or audio file
+                <input
+                  ref={input}
+                  type="file"
+                  accept={EVIDENCE_TYPES.join(",")}
+                  disabled={busy}
+                  onChange={(e) => {
+                    const next = e.target.files?.[0] || null;
+                    setFile(next);
+                    if (next && !label) setLabel(next.name.slice(0, 160));
+                  }}
+                />
+              </label>
+              {file ? (
+                <label>
+                  Name it so you can find it later
+                  <input
+                    value={label}
+                    maxLength={160}
+                    onChange={(e) => setLabel(e.target.value)}
+                  />
+                </label>
+              ) : (
+                <button
+                  type="button"
+                  className="support-text-button"
+                  onClick={() => setLinkMode(true)}
+                >
+                  Share a link instead
+                </button>
+              )}
+            </>
           )}
-          <button
-            className="support-primary-button"
-            disabled={busy || !label.trim() || (!file && !link)}
-            onClick={share}
-          >
-            {busy ? "Working…" : "Share with this case"}
-          </button>
+          {(file || linkMode) && (
+            <button
+              className="support-primary-button"
+              disabled={busy || (!file && !link.trim())}
+              onClick={share}
+            >
+              {busy ? "Sharing…" : "Share with support team"}
+            </button>
+          )}
+          <p className="support-helper">
+            Up to 10 MB each. Your support team can open what you share, and
+            each view is recorded. Shared files can’t be changed afterwards.
+          </p>
         </div>
       )}
       {preview && (

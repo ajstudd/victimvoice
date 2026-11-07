@@ -10,7 +10,6 @@ import {
   Row,
   Empty,
   Icon,
-  Badge,
   s,
   colors,
 } from "./ui";
@@ -20,26 +19,92 @@ import { PrivateGate } from "./PrivateGate";
 import { useConversationSync } from "../hooks/useConversationSync";
 import { insertSupportRequest } from "../lib/cloud-writes";
 import { CaseEvidence } from "./CaseEvidence";
+import {
+  TOPICS,
+  URGENCY,
+  statusCopy,
+  timeAgo,
+} from "../../../shared/support-copy";
+
 function SignedIn({ children }: { children: React.ReactNode }) {
   const { session } = useApp();
   return session ? (
     <>{children}</>
   ) : (
-    <Page back title="Support requests">
-      <T kind="title">Your support inbox.</T>
+    <Page back title="Talk to support">
+      <T kind="title">Sign in to talk{"\n"}with support.</T>
       <T>
-        Sign in to submit and follow a support request. Your private notes stay
-        separate.
+        Signing in lets you send a message and come back for replies. Your
+        private notes stay on this device.
       </T>
       <Button title="Sign in" onPress={() => router.push("/login")} />
       <Button
-        title="Get help without signing in"
-        tone="outline"
+        title="I need help right now"
+        tone="coral"
+        icon="phone"
         onPress={() => router.push("/help")}
       />
     </Page>
   );
 }
+
+const pillTones = {
+  waiting: { bg: colors.peach, fg: colors.ink, dot: colors.coral },
+  active: { bg: colors.sage, fg: colors.jade, dot: colors.jade },
+  done: { bg: colors.lilac, fg: colors.muted, dot: colors.muted },
+};
+export function StatusPill({ status }: { status: string }) {
+  const copy = statusCopy(status);
+  const tone = pillTones[copy.tone];
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        alignSelf: "flex-start",
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        backgroundColor: tone.bg,
+      }}
+    >
+      <View
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: 4,
+          backgroundColor: tone.dot,
+        }}
+      />
+      <T
+        kind="caption"
+        color={tone.fg}
+        style={{ fontFamily: "Inter_600SemiBold" }}
+      >
+        {copy.label}
+      </T>
+    </View>
+  );
+}
+
+function HelpNowLink() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push("/help")}
+      style={{ minHeight: 48, justifyContent: "center" }}
+    >
+      <T kind="caption">
+        Replies aren’t instant. In danger right now?{" "}
+        <T kind="caption" style={[s.link, { fontSize: 12 }]}>
+          Get help
+        </T>
+      </T>
+    </Pressable>
+  );
+}
+
 export function Requests() {
   return (
     <PrivateGate>
@@ -95,83 +160,82 @@ function RequestList() {
   const refresh = useConversationSync(load, receive, failed);
   const busy = loadedPage !== page && !error;
   return (
-    <Page back title="My conversations" onRefresh={refresh} refreshing={busy}>
-      <T kind="title">Your support inbox.</T>
-      <Notice text="Your cases are private to you and the authorized support team. For immediate danger, use Get help; this inbox has no guaranteed response time." />
+    <Page back title="Talk to support" onRefresh={refresh} refreshing={busy}>
+      <T kind="title">Your{"\n"}conversations.</T>
+      <Button
+        title="Start a new conversation"
+        icon="plus"
+        onPress={() => router.push("/request-new")}
+      />
       {busy ? (
-        <T>Loading requests…</T>
+        <T>Loading…</T>
       ) : error ? (
         <>
           <Notice tone="error" text={error} />
           <Button title="Try again" tone="outline" onPress={refresh} />
         </>
       ) : rows.length ? (
-        <View>
+        <View style={{ gap: 12 }}>
           {rows.map((row) => (
             <Pressable
               key={row.id}
               accessibilityRole="button"
+              accessibilityLabel={`${statusCopy(row.status).label}. ${row.description}`}
               onPress={() =>
                 router.push({ pathname: "/request", params: { id: row.id } })
               }
-              style={[
+              style={({ pressed }) => [
                 s.panel,
                 {
                   backgroundColor: colors.field,
                   borderWidth: 1,
                   borderColor: colors.line,
-                  marginBottom: 12,
-                  gap: 12,
+                  gap: 10,
+                  opacity: pressed ? 0.75 : 1,
                 },
               ]}
             >
               <View style={s.between}>
-                <Badge
-                  label={row.status.replaceAll("_", " ")}
-                  tone={row.status === "resolved" ? "success" : "neutral"}
-                />
-                <T kind="caption">
-                  {new Date(row.created_at).toLocaleDateString()}
-                </T>
+                <StatusPill status={row.status} />
+                <T kind="caption">{timeAgo(row.created_at)}</T>
               </View>
-              <T kind="label" numberOfLines={3}>
-                {row.description}
-              </T>
-              <View style={s.between}>
-                <T kind="caption">Case #{row.id.slice(0, 8)}</T>
-                <Icon name="arrow-right" size={18} />
+              <View style={[s.row, { alignItems: "flex-end" }]}>
+                <T kind="label" numberOfLines={2} style={{ flex: 1 }}>
+                  {row.description}
+                </T>
+                <Icon name="chevron-right" size={18} />
               </View>
             </Pressable>
           ))}
         </View>
       ) : (
         <Empty
-          title="No requests shared yet"
-          body="You can keep notes privately before choosing whether to ask for support."
+          icon="message-circle"
+          title="No conversations yet"
+          body="When you’re ready, write to the support team in your own words. Only you and the team can read it."
         />
       )}
-      <Button
-        title="Ask for support"
-        onPress={() => router.push("/request-new")}
-      />
-      <View style={s.between}>
-        <Button
-          title="Previous"
-          tone="outline"
-          disabled={!page || busy}
-          onPress={() => setPage(page - 1)}
-        />
-        <T kind="caption">Page {page + 1}</T>
-        <Button
-          title="Next"
-          tone="outline"
-          disabled={!more || busy}
-          onPress={() => setPage(page + 1)}
-        />
-      </View>
+      {(page > 0 || more) && (
+        <View style={s.between}>
+          <Button
+            title="Newer"
+            tone="outline"
+            disabled={!page || busy}
+            onPress={() => setPage(page - 1)}
+          />
+          <Button
+            title="Older"
+            tone="outline"
+            disabled={!more || busy}
+            onPress={() => setPage(page + 1)}
+          />
+        </View>
+      )}
+      <HelpNowLink />
     </Page>
   );
 }
+
 export function NewRequest() {
   return (
     <PrivateGate>
@@ -179,6 +243,60 @@ export function NewRequest() {
         <NewRequestForm />
       </SignedIn>
     </PrivateGate>
+  );
+}
+function Choice({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        minHeight: 52,
+        paddingHorizontal: 14,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: selected ? colors.ink : colors.line,
+        backgroundColor: selected ? colors.white : colors.field,
+      }}
+    >
+      <View
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 10,
+          borderWidth: 2,
+          borderColor: selected ? colors.ink : colors.muted,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {selected && (
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: colors.ink,
+            }}
+          />
+        )}
+      </View>
+      <T kind="label" style={{ flex: 1 }}>
+        {label}
+      </T>
+    </Pressable>
   );
 }
 function NewRequestForm() {
@@ -192,7 +310,6 @@ function NewRequestForm() {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [review, setReview] = useState(false);
   const [volunteers, setVolunteers] = useState(
     vault.supportDraft?.volunteers || false,
   );
@@ -202,6 +319,8 @@ function NewRequestForm() {
     vault.supportDraft.category === category &&
     vault.supportDraft.priority === priority &&
     vault.supportDraft.volunteers === volunteers;
+  const contact =
+    session?.user.email || session?.user.phone || "your account contact";
   async function saveDraft() {
     if (busy) return;
     setBusy(true);
@@ -211,7 +330,7 @@ function NewRequestForm() {
         ...v,
         supportDraft: { body, category, priority, volunteers },
       }));
-      setSaved("Draft saved on this device. It has not been shared.");
+      setSaved("Draft saved on this device only. It hasn’t been sent.");
     } catch (e) {
       setError(cloudError(e));
     } finally {
@@ -247,137 +366,142 @@ function NewRequestForm() {
     }
   }
   return (
-    <Page back title="Ask for support">
-      <Badge
-        label={review ? "2 of 2 · Review & share" : "1 of 2 · Your concern"}
+    <Page back title="Talk to support">
+      <View style={{ gap: 8 }}>
+        <T kind="title">What’s going on?</T>
+        <T>
+          Write it in your own words. A few lines is enough. You can add more,
+          and share photos or files, once the conversation starts.
+        </T>
+      </View>
+      <Field
+        label="Your message"
+        value={body}
+        onChangeText={setBody}
+        multiline
+        maxLength={20000}
+        placeholder="For example: someone keeps messaging me after I asked them to stop…"
       />
-      <T kind="title">Share only{"\n"}what you choose.</T>
-      <Notice text="Recipient: project supervisors and, only if you allow it, approved volunteers assigned to this case. This inbox has no promised response time. For immediate help, use emergency calling or your circle." />
-      {review ? (
-        <>
-          <T kind="heading">Review before sending</T>
-          <T>{body}</T>
-          <T kind="caption">
-            Category: {category.replace(/_/g, " ")} · Priority: {priority}
-          </T>
-          <T kind="caption">
-            Assigned volunteer access: {volunteers ? "Allowed" : "Off"}. You can
-            change this later.
-          </T>
-          <Notice
-            text={`Your message and account contact (${session?.user.email || session?.user.phone || "your account"}) will be shared. Your private notes, circle and location are not included.`}
-          />
-          <Button title="Submit this request" busy={busy} onPress={send} />
-          <Button
-            title="Keep editing"
-            tone="outline"
-            onPress={() => setReview(false)}
-          />
-        </>
-      ) : (
-        <>
-          <Field
-            label="What would you like help with?"
-            value={body}
-            onChangeText={setBody}
-            multiline
-            maxLength={20000}
-            placeholder="Write what you feel comfortable sharing…"
-          />
-          <T kind="label">Category</T>
-          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            {[
-              ["other", "Other"],
-              ["cyber_harassment", "Online"],
-              ["workplace_harassment", "Workplace"],
-              ["stalking", "Stalking"],
-              ["verbal_abuse", "Verbal abuse"],
-              ["physical_threat", "Physical threat"],
-            ].map(([value, label]) => (
-              <Pressable
-                key={value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: category === value }}
-                onPress={() => setCategory(value)}
-                style={{
-                  padding: 14,
-                  minHeight: 48,
-                  backgroundColor:
-                    category === value ? colors.ink : colors.lilac,
-                  borderRadius: 20,
-                }}
+      <View style={{ gap: 10 }}>
+        <T kind="label">
+          What is it about? <T kind="caption">Optional</T>
+        </T>
+        <View
+          accessibilityRole="radiogroup"
+          style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}
+        >
+          {TOPICS.map(([value, label]) => (
+            <Pressable
+              key={value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: category === value }}
+              onPress={() => setCategory(value)}
+              style={{
+                paddingHorizontal: 16,
+                minHeight: 44,
+                justifyContent: "center",
+                backgroundColor: category === value ? colors.ink : colors.lilac,
+                borderRadius: 22,
+              }}
+            >
+              <T
+                kind="caption"
+                color={category === value ? colors.paper : colors.ink}
+                style={{ fontFamily: "Inter_600SemiBold" }}
               >
-                <T
-                  kind="caption"
-                  color={category === value ? colors.paper : colors.ink}
-                >
-                  {label}
-                </T>
-              </Pressable>
-            ))}
-          </View>
-          <T kind="label">Requested priority</T>
-          <View style={s.row}>
-            {["low", "medium", "high"].map((level) => (
-              <Pressable
-                key={level}
-                accessibilityRole="button"
-                accessibilityState={{ selected: priority === level }}
-                onPress={() => setPriority(level)}
-                style={{
-                  padding: 14,
-                  minHeight: 48,
-                  borderRadius: 20,
-                  backgroundColor:
-                    priority === level ? colors.ink : colors.lilac,
-                }}
-              >
-                <T
-                  kind="caption"
-                  color={priority === level ? colors.paper : colors.ink}
-                >
-                  {level}
-                </T>
-              </Pressable>
-            ))}
-          </View>
-          <Button
-            title="Review request"
-            disabled={!body.trim()}
-            onPress={() => setReview(true)}
+                {label}
+              </T>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View accessibilityRole="radiogroup" style={{ gap: 8 }}>
+        <T kind="label">When would you like a reply?</T>
+        {URGENCY.map(([value, label]) => (
+          <Choice
+            key={value}
+            label={label}
+            selected={priority === value}
+            onPress={() => setPriority(value)}
           />
-          <Row
-            title="Allow assigned volunteers"
-            subtitle="Approved volunteers can support this case and review what you share. You can withdraw access later."
-            end={
-              <Switch
-                accessibilityLabel="Allow assigned volunteers to support this case"
-                value={volunteers}
-                onValueChange={setVolunteers}
-                trackColor={{ true: colors.jade }}
-              />
-            }
-          />
-        </>
-      )}
-      <Button
-        title="Save draft on this device"
-        icon="save"
-        tone="outline"
-        disabled={!body.trim()}
-        busy={busy}
-        onPress={saveDraft}
-      />
-      {Boolean(saved) && draftMatches && <Notice text={saved} tone="success" />}
+        ))}
+        {priority === "high" && (
+          <View
+            style={[
+              s.panel,
+              { backgroundColor: "#F9E5E2", padding: 16, gap: 10 },
+            ]}
+          >
+            <T kind="label" color={colors.error}>
+              Are you in danger right now?
+            </T>
+            <T kind="caption" color={colors.ink}>
+              The support team will see this first, but replies aren’t instant.
+              Calling or alerting your people is faster.
+            </T>
+            <Button
+              title="Get help now"
+              tone="coral"
+              icon="phone"
+              onPress={() => router.push("/help")}
+            />
+          </View>
+        )}
+      </View>
+      <View>
+        <Row
+          title="Let trained volunteers help too"
+          subtitle={
+            volunteers
+              ? "Supervisors and a volunteer they assign can read this. You can turn it off anytime."
+              : "Only supervisors will read this. You can change it anytime."
+          }
+          end={
+            <Switch
+              accessibilityLabel="Let trained volunteers help too"
+              value={volunteers}
+              onValueChange={setVolunteers}
+              trackColor={{ true: colors.jade }}
+            />
+          }
+        />
+      </View>
+      <View style={[s.row, { alignItems: "flex-start" }]}>
+        <Icon name="lock" size={16} color={colors.muted} />
+        <T kind="caption" style={{ flex: 1 }}>
+          Sending shares this message and {contact} with the support team. Your
+          notes, circle and location are not included.
+        </T>
+      </View>
       {Boolean(error) && <Notice text={error} tone="error" />}
       <Button
-        title="Open immediate help"
-        tone="outline"
-        onPress={() => router.push("/help")}
+        title="Send to support"
+        icon="send"
+        disabled={!body.trim()}
+        busy={busy}
+        onPress={send}
       />
+      {Boolean(saved) && draftMatches ? (
+        <Notice text={saved} tone="success" />
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          disabled={!body.trim() || busy}
+          onPress={saveDraft}
+          style={{
+            minHeight: 48,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: !body.trim() ? 0.45 : 1,
+          }}
+        >
+          <T style={s.link}>Not ready? Save as a draft on this device</T>
+        </Pressable>
+      )}
     </Page>
   );
 }
+
 export function RequestDetail({ id }: { id?: string }) {
   const { session } = useApp();
   return (
@@ -390,9 +514,9 @@ export function RequestDetail({ id }: { id?: string }) {
 }
 function RequestContent({ id }: { id?: string }) {
   const { session } = useApp();
-  const [section, setSection] = useState<
-    "conversation" | "evidence" | "privacy"
-  >("conversation");
+  const [section, setSection] = useState<"conversation" | "files" | "privacy">(
+    "conversation",
+  );
   const [expanded, setExpanded] = useState(false);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const nearBottom = useRef(true);
@@ -418,7 +542,7 @@ function RequestContent({ id }: { id?: string }) {
   const [page, setPage] = useState(0);
   const load = useCallback(
     async (signal: AbortSignal): Promise<Conversation> => {
-      if (!id) throw new Error("No request was selected.");
+      if (!id) throw new Error("No conversation was selected.");
       const [request, comments] = await Promise.all([
         supabase
           .from("support_requests")
@@ -461,7 +585,7 @@ function RequestContent({ id }: { id?: string }) {
   }, []);
   const failed = useCallback(() => {
     setSyncError(
-      "Could not check for replies. We will retry automatically when connected.",
+      "Couldn’t check for replies. We’ll try again automatically when you’re connected.",
     );
   }, []);
   const refresh = useConversationSync(load, receive, failed);
@@ -488,6 +612,7 @@ function RequestContent({ id }: { id?: string }) {
       setBusy(false);
     }
   }
+  const status = record ? statusCopy(record.status) : null;
   return (
     <Page
       back
@@ -518,13 +643,28 @@ function RequestContent({ id }: { id?: string }) {
               <Button
                 title="New reply · Jump to latest"
                 tone="outline"
+                icon="arrow-down"
                 onPress={() => {
                   scroll.current?.scrollToEnd({ animated: true });
                   setNewReply(false);
                 }}
               />
             )}
-            <View style={[s.row, { alignItems: "flex-end" }]}>
+            {Boolean(error) && <Notice text={error} tone="error" />}
+            <View style={[s.row, { alignItems: "flex-end", gap: 8 }]}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Share a photo, file or link"
+                onPress={() => setSection("files")}
+                style={{
+                  width: 48,
+                  height: 54,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon name="paperclip" />
+              </Pressable>
               <TextInput
                 accessibilityLabel="Your message to support"
                 placeholder="Write a message…"
@@ -555,67 +695,66 @@ function RequestContent({ id }: { id?: string }) {
                 <Icon name={busy ? "clock" : "send"} color={colors.paper} />
               </Pressable>
             </View>
-            <T kind="caption">
-              Only this case’s support team can read your message.
-            </T>
-            {Boolean(error) && <Notice text={error} tone="error" />}
           </View>
         ) : undefined
       }
     >
       {loading ? (
-        <T>Loading request…</T>
-      ) : record && data?.page === page ? (
+        <T>Loading conversation…</T>
+      ) : record && status && data?.page === page ? (
         <>
-          <View style={s.panel}>
+          <View style={{ gap: 8 }}>
             <View style={s.between}>
-              <Badge
-                label={record.status.replace(/_/g, " ")}
-                tone={record.status === "resolved" ? "success" : "neutral"}
-              />
-              <Icon name="message-circle" size={21} />
+              <StatusPill status={record.status} />
+              <T kind="caption">Started {timeAgo(record.created_at)}</T>
             </View>
-            <T kind="caption">Case #{record.id.slice(0, 8)}</T>
-            <T numberOfLines={expanded ? undefined : 3}>{record.description}</T>
-            {record.description.length > 140 && (
-              <Pressable
-                accessibilityRole="button"
-                style={{ minHeight: 48, justifyContent: "center" }}
-                onPress={() => setExpanded((v) => !v)}
-              >
-                <T style={s.link}>
-                  {expanded ? "Show less" : "Read original request"}
-                </T>
-              </Pressable>
-            )}
+            {Boolean(status.detail) && <T>{status.detail}</T>}
           </View>
-          <View style={[s.row, { gap: 8 }]}>
+          <View
+            accessibilityRole="tablist"
+            style={{
+              flexDirection: "row",
+              padding: 4,
+              borderRadius: 16,
+              backgroundColor: colors.lilac,
+            }}
+          >
             {(
               [
-                ["conversation", "Conversation"],
-                ["evidence", "Evidence"],
-                ["privacy", "Team & privacy"],
+                ["conversation", "Messages", "message-circle"],
+                ["files", "Files", "paperclip"],
+                ["privacy", "Who can see", "lock"],
               ] as const
-            ).map(([key, label]) => (
+            ).map(([key, label, icon]) => (
               <Pressable
                 key={key}
-                accessibilityRole="button"
+                accessibilityRole="tab"
                 accessibilityState={{ selected: section === key }}
                 onPress={() => setSection(key)}
                 style={{
                   flex: 1,
-                  minHeight: 52,
-                  padding: 9,
-                  borderRadius: 14,
+                  minHeight: 44,
+                  flexDirection: "row",
+                  gap: 6,
+                  borderRadius: 12,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: section === key ? colors.ink : colors.lilac,
+                  backgroundColor:
+                    section === key ? colors.white : "transparent",
                 }}
               >
+                <Icon
+                  name={icon}
+                  size={15}
+                  color={section === key ? colors.ink : colors.muted}
+                />
                 <T
                   kind="caption"
-                  color={section === key ? colors.paper : colors.ink}
-                  style={{ textAlign: "center" }}
+                  color={section === key ? colors.ink : colors.muted}
+                  style={{
+                    fontFamily:
+                      section === key ? "Inter_600SemiBold" : "Inter_400Regular",
+                  }}
                 >
                   {label}
                 </T>
@@ -624,22 +763,22 @@ function RequestContent({ id }: { id?: string }) {
           </View>
           {section === "privacy" && (
             <>
-              <Notice text="A received request does not mean someone is monitoring an emergency. This inbox has no guaranteed response time." />
               <Row
-                title="Assigned volunteer support"
+                title="Let trained volunteers help"
                 subtitle={
                   record.allow_volunteer_support
-                    ? "Approved, assigned volunteers can view this case. Turn off to revoke their access."
-                    : "Only supervisors can support this case. Your contact details stay outside the volunteer workspace."
+                    ? "On. Supervisors and a volunteer they assign can read this conversation and its files."
+                    : "Off. Only supervisors can read this conversation and its files."
                 }
                 end={
                   <Switch
-                    accessibilityLabel="Allow assigned volunteers"
+                    accessibilityLabel="Let trained volunteers help"
                     value={record.allow_volunteer_support}
                     disabled={busy}
                     trackColor={{ true: colors.jade }}
                     onValueChange={async (value) => {
                       setBusy(true);
+                      setError("");
                       try {
                         const result = await supabase.rpc(
                           "vv_set_support_consent",
@@ -656,86 +795,148 @@ function RequestContent({ id }: { id?: string }) {
                   />
                 }
               />
-              <T kind="caption">
-                Turning off volunteer access cancels assignments. Your private
-                notes and circle are never included in this case. Supervisors
-                can review support activity.
-              </T>
+              <View style={{ gap: 10 }}>
+                {[
+                  ["eye-off", "Volunteers never see your email or phone number."],
+                  [
+                    "user-x",
+                    "Turning volunteers off removes their access straight away.",
+                  ],
+                  [
+                    "lock",
+                    "Your private notes and circle are never part of this conversation.",
+                  ],
+                  ["activity", "Supervisors can review who opened your files."],
+                ].map(([icon, line]) => (
+                  <View key={line} style={[s.row, { alignItems: "flex-start" }]}>
+                    <Icon name={icon as "lock"} size={16} color={colors.muted} />
+                    <T kind="caption" style={{ flex: 1 }}>
+                      {line}
+                    </T>
+                  </View>
+                ))}
+              </View>
+              <HelpNowLink />
             </>
           )}
           {section === "conversation" && (
             <>
-              <View style={s.row}>
-                <T kind="caption" style={{ flex: 1 }}>
-                  Replies update automatically here. Closed-app notifications
-                  are not enabled.
-                </T>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Check for replies now"
-                  onPress={refresh}
+              {!more && (
+              <View
+                style={{
+                  alignSelf: "flex-end",
+                  maxWidth: "88%",
+                  gap: 4,
+                }}
+              >
+                <View
                   style={{
-                    width: 48,
-                    height: 48,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    backgroundColor: colors.ink,
+                    padding: 14,
+                    borderRadius: 18,
+                    borderBottomRightRadius: 6,
                   }}
                 >
-                  <Icon name="refresh-cw" size={19} />
-                </Pressable>
-              </View>
-              {rows.length ? (
-                <View style={{ gap: 14 }}>
-                  {[...rows].reverse().map((row) => (
-                    <View
-                      key={row.id}
-                      style={[
-                        s.panel,
-                        {
-                          backgroundColor:
-                            row.sender === "user" ? colors.lilac : colors.sage,
-                          alignSelf:
-                            row.sender === "user" ? "flex-end" : "flex-start",
-                          maxWidth: "94%",
-                          padding: 16,
-                          borderRadius: 18,
-                        },
-                      ]}
+                  <T
+                    color={colors.paper}
+                    numberOfLines={expanded ? undefined : 6}
+                  >
+                    {record.description}
+                  </T>
+                  {record.description.length > 240 && (
+                    <Pressable
+                      accessibilityRole="button"
+                      style={{ minHeight: 40, justifyContent: "center" }}
+                      onPress={() => setExpanded((v) => !v)}
                     >
-                      <T kind="caption">
-                        {row.sender === "user" ? "You" : "Support team"} ·
-                        {new Date(row.created_at).toLocaleString()}
+                      <T
+                        kind="caption"
+                        color={colors.paper}
+                        style={{ textDecorationLine: "underline" }}
+                      >
+                        {expanded ? "Show less" : "Show full message"}
                       </T>
-                      <T color={colors.ink}>{row.content}</T>
-                    </View>
-                  ))}
+                    </Pressable>
+                  )}
                 </View>
-              ) : (
-                <Empty
-                  title="Your message is received"
-                  body="Replies will appear here. You can add more details below or share media in Evidence."
-                  icon="message-circle"
+                <T kind="caption" style={{ textAlign: "right" }}>
+                  Your first message · {timeAgo(record.created_at)}
+                </T>
+              </View>
+              )}
+              {more && (
+                <Button
+                  title="Show earlier messages"
+                  tone="outline"
+                  icon="chevron-up"
+                  onPress={() => setPage(page + 1)}
                 />
               )}
-              {(page > 0 || more) && (
-                <View style={s.between}>
-                  <Button
-                    title="Newer"
-                    tone="outline"
-                    disabled={!page}
-                    onPress={() => setPage(page - 1)}
-                  />
-                  <Button
-                    title="Older"
-                    tone="outline"
-                    disabled={!more}
-                    onPress={() => setPage(page + 1)}
-                  />
+              {rows.length ? (
+                <View style={{ gap: 14 }}>
+                  {[...rows].reverse().map((row) => {
+                    const mine = row.sender === "user";
+                    return (
+                      <View
+                        key={row.id}
+                        style={{
+                          alignSelf: mine ? "flex-end" : "flex-start",
+                          maxWidth: "88%",
+                          gap: 4,
+                        }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: mine ? colors.ink : colors.white,
+                            borderWidth: mine ? 0 : 1,
+                            borderColor: colors.line,
+                            padding: 14,
+                            borderRadius: 18,
+                            borderBottomRightRadius: mine ? 6 : 18,
+                            borderBottomLeftRadius: mine ? 18 : 6,
+                          }}
+                        >
+                          <T color={mine ? colors.paper : colors.ink} selectable>
+                            {row.content}
+                          </T>
+                        </View>
+                        <T
+                          kind="caption"
+                          style={{ textAlign: mine ? "right" : "left" }}
+                        >
+                          {mine ? "You" : "Support team"} ·{" "}
+                          {timeAgo(row.created_at)}
+                        </T>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={[s.panel, { backgroundColor: colors.sage }]}>
+                  <View style={s.row}>
+                    <Icon name="check-circle" color={colors.jade} />
+                    <T kind="label">Sent to the support team</T>
+                  </View>
+                  <T color={colors.ink}>
+                    Their reply will appear here. You can keep adding details
+                    below, or tap the paperclip to share screenshots and files.
+                  </T>
                 </View>
               )}
+              {page > 0 && (
+                <Button
+                  title="Back to latest"
+                  tone="outline"
+                  onPress={() => setPage(page - 1)}
+                />
+              )}
+              <T kind="caption" style={{ textAlign: "center" }}>
+                New replies appear while this screen is open · Pull down to
+                check
+              </T>
             </>
           )}
-          {section === "evidence" && (
+          {section === "files" && (
             <CaseEvidence key={record.id} requestId={record.id} />
           )}
         </>
@@ -744,7 +945,7 @@ function RequestContent({ id }: { id?: string }) {
         <>
           <Notice text={syncError} tone="error" />
           <Button
-            title="Try checking again"
+            title="Try again"
             tone="outline"
             icon="refresh-cw"
             onPress={refresh}

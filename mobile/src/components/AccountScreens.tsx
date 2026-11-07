@@ -489,11 +489,11 @@ export function Status() {
         onPress={() => router.push("/settings")}
       />
       <Row
-        title="Support inbox"
+        title="Support conversations"
         subtitle={
           session
-            ? "Signed in · Open your cases or create a request"
-            : "Sign in to share a case and receive support replies"
+            ? "Continue a conversation or start a new one"
+            : "Sign in to message the support team and get replies"
         }
         icon="message-circle"
         onPress={() => router.push(session ? "/requests" : "/login")}

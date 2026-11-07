@@ -1,230 +1,144 @@
 "use client";
 
-import { useState } from "react";
-import { createRequest } from "@/lib/requests";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { Shield, ArrowLeft, Upload } from "lucide-react";
-import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { LockKeyhole, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { createRequest } from "@/lib/requests";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { TOPICS, URGENCY } from "@/shared/support-copy";
 
 export default function NewRequest() {
   const isAuthenticated = useAuth();
-  const { toast } = useToast();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [topic, setTopic] = useState("other");
+  const [urgency, setUrgency] = useState("medium");
+  const [volunteers, setVolunteers] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  const [formData, setFormData] = useState({
-    userAddress: "",
-    accusedAddress: "",
-    accusedName: "",
-    accusedPhone: "",
-    harassmentType: "",
-    severityLevel: "",
-    description: "",
-    screenshotEvidence: "",
-    videoEvidence: "",
-  });
-
-  const handleChange = (e: any) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-
-    // Basic form validation
-    const { userAddress, accusedAddress, accusedName, harassmentType, severityLevel, description } = formData;
-    if (!userAddress || !accusedAddress || !accusedName || !harassmentType || !severityLevel || !description) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!description.trim() || sending) return;
+    setSending(true);
+    setError("");
     try {
-      await createRequest(formData);
-      toast({
-        title: "Request submitted successfully",
-        description: "We'll review your case and respond as soon as possible.",
+      const id = await createRequest({
+        description,
+        harassmentType: topic,
+        severityLevel: urgency,
+        allowVolunteers: volunteers,
       });
-      router.push("/dashboard");
-    } catch (error) {
-      toast({
-        title: "Submission Error",
-        description: error instanceof Error ? error.message : "There was an issue submitting your request. Please try again later.",
-      });
-    } finally {
-      setIsSubmitting(false);
+      router.replace(`/dashboard/requests?id=${id}`);
+    } catch {
+      setError("Your message couldn’t be sent. Please check your connection and try again.");
+      setSending(false);
     }
-  };
+  }
 
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <Shield className="h-8 w-8 text-primary" />
-              <span className="text-xl font-semibold">New Support Request</span>
-            </div>
-            <Button variant="ghost" asChild>
-              <Link href="/dashboard">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+    <DashboardShell back={{ href: "/dashboard", label: "Your conversations" }}>
+      <h1 className="vv-title">What’s going on?</h1>
+      <p className="vv-lead">
+        Write it in your own words. A few lines is enough — you can add more, and share
+        screenshots or files, once the conversation starts.
+      </p>
+      <form className="vv-form" onSubmit={submit}>
+        <div>
+          <label className="vv-field-label" htmlFor="message">
+            Your message
+          </label>
+          <textarea
+            id="message"
+            value={description}
+            maxLength={20000}
+            required
+            autoFocus
+            placeholder="For example: someone keeps messaging me after I asked them to stop…"
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <span className="vv-field-label" id="topic-label">
+            What is it about?<small>Optional</small>
+          </span>
+          <div className="vv-chips" role="radiogroup" aria-labelledby="topic-label">
+            {TOPICS.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={topic === value}
+                onClick={() => setTopic(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
-      </nav>
 
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Submit Your Request</CardTitle>
-            <CardDescription>
-              Please provide as much detail as possible to help us understand your situation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Address</label>
-                  <Input name="userAddress" placeholder="Enter your full address" required onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Accused&apos;s Address</label>
-                  <Input name="accusedAddress" placeholder="Enter the accused's address" required onChange={handleChange} />
-                </div>
-              </div>
+        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="vv-field-label">When would you like a reply?</legend>
+          <div className="vv-choices">
+            {URGENCY.map(([value, label]) => (
+              <label className="vv-choice" key={value}>
+                <input
+                  type="radio"
+                  name="urgency"
+                  value={value}
+                  checked={urgency === value}
+                  onChange={() => setUrgency(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          {urgency === "high" && (
+            <div className="vv-urgent" role="note" style={{ marginTop: 10 }}>
+              <strong>Are you in danger right now?</strong>
+              <p>
+                The support team will see this first, but replies aren’t instant. Calling
+                emergency services is faster.
+              </p>
+              <a className="vv-button vv-coral" href="tel:112">
+                Call 112
+              </a>
+            </div>
+          )}
+        </fieldset>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Accused&apos;s Name</label>
-                <Input name="accusedName" placeholder="Enter the accused's name" required onChange={handleChange} />
-              </div>
+        <label className="vv-toggle">
+          <span>
+            <strong>Let trained volunteers help too</strong>
+            {volunteers
+              ? "Supervisors and a volunteer they assign can read this. You can turn it off anytime."
+              : "Only supervisors will read this. You can change it anytime."}
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            className="vv-switch"
+            checked={volunteers}
+            onChange={(e) => setVolunteers(e.target.checked)}
+          />
+        </label>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Accused&apos;s Phone</label>
-                <Input name="accusedPhone" maxLength={40} placeholder="Enter the accused's phone number (optional)" onChange={handleChange} />
-              </div>
-
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Type of Harassment</label>
-                <Select required onValueChange={(value) => setFormData({ ...formData, harassmentType: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cyber_harassment">Cyber Harassment</SelectItem>
-                    <SelectItem value="workplace_harassment">Workplace Harassment</SelectItem>
-                    <SelectItem value="stalking">Stalking</SelectItem>
-                    <SelectItem value="verbal_abuse">Verbal Abuse</SelectItem>
-                    <SelectItem value="physical_threat">Physical Threat</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Severity Level</label>
-                <Select required onValueChange={(value) => setFormData({ ...formData, severityLevel: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low - Concerning but not immediate threat</SelectItem>
-                    <SelectItem value="medium">Medium - Escalating situation</SelectItem>
-                    <SelectItem value="high">High - Immediate attention needed</SelectItem>
-                    <SelectItem value="critical">Critical - Life-threatening situation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea maxLength={20000} name="description" placeholder="Please describe the situation in detail..." className="min-h-[150px]" required onChange={handleChange} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Evidence Links (optional)</label>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Screenshots of conversations (URLs)</p>
-                    <Input type="url" maxLength={2048} name="screenshotEvidence" placeholder="Enter URL to screenshot evidence" onChange={handleChange} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Video evidence (URLs)</p>
-                    <Input type="url" maxLength={2048} name="videoEvidence" placeholder="Enter URL to video evidence" onChange={handleChange} />
-                  </div>
-                </div>
-              </div>
-
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="link">How to : Upload files on Google Drive and share link</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <iframe
-                    width="460"
-                    height="315"
-                    src="https://www.youtube.com/embed/Lx0sozfFVv8?si=GdYXB82yVvw1sxHd"
-                    title="YouTube video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  ></iframe>
-                </DialogContent>
-              </Dialog>
-
-              <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/dashboard">Cancel</Link>
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Submit Request
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+        <p className="vv-note">
+          <LockKeyhole size={15} />
+          Sending shares this message and your account email or phone with the support
+          team. Nothing else from your account is included.
+        </p>
+        {error && <p role="alert" className="vv-error">{error}</p>}
+        <div className="vv-form-actions">
+          <button className="vv-button" type="submit" disabled={sending || !description.trim()}>
+            <Send size={17} /> {sending ? "Sending…" : "Send to support"}
+          </button>
+        </div>
+      </form>
+    </DashboardShell>
   );
 }
