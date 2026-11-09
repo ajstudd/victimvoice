@@ -205,7 +205,7 @@ function NoteContent({ id }: { id?: string }) {
         <T kind="caption">
           {Platform.OS === "web"
             ? "Preview only · Notes disappear on refresh"
-            : "On this device · Not sent to the backend"}
+            : "Private · Saved only on this phone"}
         </T>
       </View>
       <Field

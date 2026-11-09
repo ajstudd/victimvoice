@@ -57,3 +57,48 @@ export class ShakeDetector {
     return true;
   }
 }
+
+export class DropDetector {
+  private lowAt: number | null = null;
+  private sustained = false;
+  private lastTrigger = -Infinity;
+  sample(g: number, at: number) {
+    if (!Number.isFinite(g) || !Number.isFinite(at)) return false;
+    if (this.lowAt !== null && at - this.lowAt > 1000) {
+      this.lowAt = null;
+      this.sustained = false;
+    }
+    if (g < 0.35) {
+      if (this.lowAt === null) this.lowAt = at;
+      else if (at - this.lowAt >= 80) this.sustained = true;
+    }
+    if (
+      g > 2.7 &&
+      this.lowAt !== null &&
+      this.sustained &&
+      at - this.lastTrigger >= 10000
+    ) {
+      this.lowAt = null;
+      this.sustained = false;
+      this.lastTrigger = at;
+      return true;
+    }
+    return false;
+  }
+}
+
+export function motionDecision(
+  deadline: number | null,
+  now: number,
+  allowed: { enabled: boolean; active: boolean; existingRequest: boolean },
+): "wait" | "cancel" | "send" {
+  if (
+    deadline === null ||
+    !allowed.enabled ||
+    !allowed.active ||
+    allowed.existingRequest
+  )
+    return "cancel";
+  if (now < deadline) return "wait";
+  return now - deadline <= 5000 ? "send" : "cancel";
+}

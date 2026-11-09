@@ -61,8 +61,8 @@ export function Journey() {
     <Page back title="Journey companion">
       <View style={{ gap: 8 }}>
         <Badge label="On-device check-in" />
-        <T kind="title">A moment to{"\n"}check in.</T>
-        <T>Your destination, your time. A small pause along the way.</T>
+        <T kind="title">Plan your{"\n"}check in.</T>
+        <T>Set a check-in time and choose whether to share your location.</T>
       </View>
       <JourneyLiveControls />
       {journey ? (

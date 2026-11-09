@@ -50,10 +50,10 @@ export function Home() {
             fontFamily: "Inter_600SemiBold",
           }}
         >
-          HERE FOR YOUR NEXT STEP
+          YOUR SAFETY TOOLS
         </T>
-        <T kind="title">Here for you.{"\n"}At your pace.</T>
-        <T>A familiar place to turn, whenever you need it.</T>
+        <T kind="title">Your safety tools.{"\n"}Close at hand.</T>
+        <T>Reach your contacts, share your journey or talk to support.</T>
       </View>
       <Pressable
         accessibilityRole="button"
@@ -138,11 +138,15 @@ export function Home() {
           onPress={() => router.push("/journey")}
         />
         <QuickAction
-          title="Motion check-in"
-          detail="Try a rehearsal"
+          title="Shake & drop"
+          detail={
+            vault.motionAlertsEnabled === false
+              ? "Off · Settings"
+              : "Manage in Settings"
+          }
           icon="shield"
           tone={colors.lilac}
-          onPress={() => router.push("/safety")}
+          onPress={() => router.push("/settings")}
         />
       </View>
       <View style={[s.panel, { backgroundColor: colors.peach, gap: 14 }]}>
@@ -284,7 +288,7 @@ export function Home() {
       )}
       <View style={{ gap: 4 }}>
         <SectionHeading
-          title="A little guidance"
+          title="Safety guides"
           action="Explore"
           onPress={() => router.push("/guide")}
         />

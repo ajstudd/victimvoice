@@ -55,7 +55,7 @@ test("SOS validates bounded unique saved contacts and fresh finite location", ()
 });
 test("relay message identifies the person and chosen callback rather than encouraging a call to the provider sender", () => {
   const text = sosText(id, "Fictional woman", null, false, "+919999999990");
-  assert.match(text, /Fictional woman is asking for help/);
+  assert.match(text, /safety alert for Fictional woman/);
   assert.match(text, /Call \+919999999990/);
   assert.ok(!text.includes("example.test"));
   assert.match(

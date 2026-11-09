@@ -112,5 +112,5 @@ export function sosText(
       .trim()
       .replace(/[\r\n]/g, " ")
       .slice(0, 60) || "Someone in your trusted circle";
-  return `${test ? "Victim Voice TEST. No help is needed." : "Victim Voice: " + label + " is asking for help."}${callback && /^\+[1-9]\d{7,14}$/.test(callback) ? " Call " + callback + "." : " Please contact them through your usual number."}${location ? " Location: https://maps.google.com/?q=" + location.latitude + "," + location.longitude : ""} Ref ${id.slice(0, 8)}.`;
+  return `${test ? "Victim Voice TEST. No help is needed." : "Victim Voice safety alert for " + label + ". Please check on them."}${callback && /^\+[1-9]\d{7,14}$/.test(callback) ? " Call " + callback + "." : " Please contact them through your usual number."}${location ? " Location: https://maps.google.com/?q=" + location.latitude + "," + location.longitude : ""} Ref ${id.slice(0, 8)}.`;
 }

@@ -29,6 +29,8 @@ export type Note = {
 };
 export type Plan = { safePlace: string; steps: string };
 export type Vault = {
+  motionAlertsEnabled?: boolean;
+  motionPermissionCheckedAt?: number;
   liveJourney?: { id: string; token: string; expiresAt: number; stopping?: boolean; lastPublishedAt?: number; error?: string };
   pushToken?: string;
   sosPreferences?: import("../lib/sos-client").SosPreferences;

@@ -29,6 +29,7 @@ import { confirmAction } from "../lib/confirm";
 import { privateStorage } from "../lib/storage";
 import { deleteAccountWithEvidence } from "../../../shared/case-evidence";
 import { AppUpdates } from "./AppUpdates";
+import { MotionSettings } from "./MotionSafety";
 export function Login() {
   const { session } = useApp();
   const [phone, setPhone] = useState("+91");
@@ -88,7 +89,7 @@ export function Login() {
       {!backendConfigured && (
         <Notice
           tone="error"
-          text="Supabase must be configured before sign-in is available."
+          text="Sign-in is temporarily unavailable. Please try again later."
         />
       )}
       <Button
@@ -218,15 +219,16 @@ function SettingsContent() {
   }
   return (
     <Page back title="Privacy & control">
-      <T kind="title">Your choice.{"\n"}Your control.</T>
+      <T kind="title">Settings.{"\n"}Your preferences.</T>
       <T>Choose how this app works for you.</T>
+      <MotionSettings />
       <View>
         <Row
           title="Your account"
           subtitle={
             session?.user.email ||
             session?.user.phone ||
-            "Guest · on-device space"
+            "Guest · Signed out"
           }
           icon="user"
           onPress={() => router.push("/login")}
@@ -247,7 +249,7 @@ function SettingsContent() {
         />
         <Row
           title="Safety message setup"
-          subtitle="SIM first, Twilio fallback and pilot responder options"
+          subtitle="Choose who receives your alert and how to reach them"
           icon="send"
           onPress={() => router.push("/sos-setup")}
         />
@@ -259,21 +261,21 @@ function SettingsContent() {
         />
         <Row
           title="Location sharing"
-          subtitle="A chosen snapshot, or live updates during an enabled foreground journey"
+          subtitle="Choose a location snapshot or share your journey while the app is open"
           icon="map-pin"
         />
         <Row
           title="Screenshots & recording"
           subtitle={
             Platform.OS === "web"
-              ? "A browser cannot block capture. Use the installed app for native screen protection."
+              ? "Screenshots cannot be blocked in a browser. The phone app protects private screens."
               : "App capture protection is enabled, including the recent-app preview on Android. A separate camera cannot be blocked."
           }
           icon="shield"
         />
         <Row
           title="Language"
-          subtitle="English · More reviewed languages planned"
+          subtitle="English"
           icon="globe"
         />
         <Row
@@ -354,13 +356,14 @@ function SettingsContent() {
       <Notice
         text={
           Platform.OS === "web"
-            ? "Browser preview: private changes are held only in memory and disappear on reload. Use the Android app for encrypted device storage."
-            : "Private notes are encrypted on this device and do not sync to Supabase. Contacts sync only when you choose Sync my circle."
+            ? "Private notes in this browser disappear when you refresh or close the page. Use the phone app to keep them."
+            : "Your notes stay encrypted on this phone. Only contacts you choose to sync are saved to your account."
         }
       />
       <T kind="caption">
-        Android pilot · Background monitoring and nearby volunteer dispatch are
-        not active. Assigned support volunteers work through the support inbox.
+        Shake and drop alerts pause when you close or lock the app. For urgent
+        help, use Get help. You can reach your support team through your
+        conversations.
       </T>
     </Page>
   );
@@ -382,7 +385,7 @@ export function Status() {
           setChecks({
             location:
               "Choose Include my location from Get help to request a snapshot",
-            motion: "Use the on-screen rehearsal in this browser",
+            motion: "Motion detection is available in the phone app",
             security: "Device lock is available in the installed app",
           });
         return;
@@ -412,7 +415,7 @@ export function Status() {
         motion:
           motion.status === "fulfilled"
             ? motion.value
-              ? "Sensor available · Foreground rehearsal only"
+              ? "Sensor available · Works while the app is open"
               : "No motion sensor available"
             : "Could not check motion sensor",
         security:
@@ -472,10 +475,10 @@ export function Status() {
         />
       </View>
       <Row
-        title="Motion check-in"
+        title="Shake & drop alerts"
         subtitle={checks.motion}
         icon="activity"
-        onPress={() => router.push("/safety")}
+        onPress={() => router.push("/settings")}
       />
       <Row title="Device security" subtitle={checks.security} icon="lock" />
       <Row
@@ -523,7 +526,7 @@ export function Status() {
         tone="outline"
         onPress={() => read()}
       />
-      <Notice text="Direct contact SMS uses your saved setup and the new Android build. Sensor-triggered alerts and background monitoring remain a rehearsal. Push and police routing need backend configuration and verified receiving teams. This screen cannot confirm delivery or response." />
+      <Notice text="Safety requests use the contacts and delivery choices in your settings. Shake and drop alerts work while the app is open. Check your request for message status; sending a message does not confirm that someone has responded." />
       {Boolean(error) && <Notice text={error} tone="error" />}
     </Page>
   );

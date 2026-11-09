@@ -72,7 +72,7 @@ export async function sosRequest(
     if (!response.ok)
       throw Error(
         result.error ||
-          "SOS backend setup is required. Local SMS and calling remain available.",
+          "Could not reach the messaging service. You can still call your contacts or try texting from your phone.",
       );
     return result;
   } catch (e) {
@@ -92,7 +92,7 @@ export async function sosCapabilities() {
   });
   if (!result.ok)
     throw Error(
-      "SOS backend has not been deployed yet. SIM SMS can still be used after granting permission.",
+      "Message availability could not be checked. You can still call your contacts or try texting from your phone.",
     );
   return result.json() as Promise<{ relay: boolean; push: boolean }>;
 }

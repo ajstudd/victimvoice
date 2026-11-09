@@ -88,7 +88,7 @@ function ResponderContent() {
           {!profile ? (
             <>
               <T>
-                Apply for supervised response in a pilot area. Submitting an
+                Apply to help people in your area. Submitting an
                 application does not grant incident or location access.
               </T>
               <Field

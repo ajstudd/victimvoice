@@ -16,7 +16,7 @@ export function AppUpdates() {
     try {
       const update = await Updates.checkForUpdateAsync();
       if (!update.isAvailable && !update.isRollBackToEmbedded) {
-        setMessage("You are using the latest compatible update.");
+        setMessage("Your app is up to date.");
         return;
       }
       await Updates.fetchUpdateAsync();
@@ -37,13 +37,13 @@ export function AppUpdates() {
       <T kind="label">App updates</T>
       <T kind="caption">
         Version {Constants.expoConfig?.version || "unknown"} ·{" "}
-        {Updates.channel || "local build"}
+        {Updates.channel ? "Automatic updates enabled" : "Installed version"}
       </T>
       {Platform.OS !== "web" && Updates.isEnabled && (
         <T kind="caption">
           {Updates.isEmbeddedLaunch
-            ? "Running the installed build."
-            : "Running a downloaded app update."}
+            ? "Using the installed app version."
+            : "Your downloaded update is active."}
         </T>
       )}
       {Platform.OS === "web" ? (
@@ -54,9 +54,8 @@ export function AppUpdates() {
       ) : Updates.isEnabled ? (
         <>
           <T kind="caption">
-            Compatible improvements download when the app opens and apply on a
-            later launch. New native features may require a new app
-            installation.
+            Updates download when you open the app. Close and reopen it to use
+            them. Some improvements need the latest app version.
           </T>
           <Button
             title="Check for app updates"
@@ -67,8 +66,7 @@ export function AppUpdates() {
         </>
       ) : (
         <T kind="caption">
-          This build does not receive over-the-air updates. Install the latest
-          Android build to enable them.
+          Install the latest Android app version to enable automatic updates.
         </T>
       )}
       {Boolean(message) && (

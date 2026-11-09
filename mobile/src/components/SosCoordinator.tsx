@@ -110,7 +110,7 @@ function Running() {
                   ? {
                       ...v.sos,
                       cloudError:
-                        "Sign in is required for Twilio and responder alerts. SIM sending remains independent.",
+                        "Sign in to use backup messages or contact nearby responders. Your phone can still try to text your contacts.",
                     }
                   : v.sos,
             }));
@@ -145,11 +145,11 @@ function Running() {
                       cloudCreated: true,
                       cloudError:
                         (e.preferences.relay && !capability.relay
-                          ? "Twilio relay is not configured. No fallback SMS has been accepted. "
+                          ? "Backup messaging is unavailable. No backup message has been sent. "
                           : "") +
                           ((e.preferences.volunteers || e.preferences.police) &&
                           !capability.push
-                            ? "Responder push is not configured."
+                            ? "Nearby responder notifications are unavailable."
                             : "") || undefined,
                     }
                   : v.sos,

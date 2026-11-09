@@ -36,7 +36,7 @@ function SosSetupContent() {
     try {
       setCloud(await sosCapabilities());
       setCap(nativeSms?.capabilities());
-      setMessage("Configuration checked. This did not send any messages.");
+      setMessage("Availability checked. No message was sent.");
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -45,13 +45,16 @@ function SosSetupContent() {
   }
   return (
     <Page back title="Safety message setup">
-      <Badge label="SIM first · Twilio fallback" />
-      <T kind="title">Your people,{"\n"}your choices.</T>
+      <Badge label="Your safety message" />
+      <T kind="title">Set up your{ "\n" }safety messages.</T>
       <T>
         After setup, the send action messages your selected contacts directly.
         No share sheet opens.
       </T>
-      <T>Changes apply to the next alert. Close an active alert before changing who receives it.</T>
+      <T>
+        Changes apply to the next alert. Close an active alert before changing
+        who receives it.
+      </T>
       <Field
         label="Name shown in your alert"
         value={preferences.alias}
@@ -60,7 +63,7 @@ function SosSetupContent() {
       />
       <Field
         label="Your callback number (optional)"
-        hint="Twilio sends from its own number. Include yours only if you want contacts to call it."
+        hint="Backup messages come from a service number. Add your number if you want people to call you back."
         value={preferences.callback}
         keyboardType="phone-pad"
         maxLength={18}
@@ -70,7 +73,7 @@ function SosSetupContent() {
         title="Phone SIM sending"
         subtitle={
           !nativeSms
-            ? "Install the new Android APK to enable direct SIM SMS."
+            ? "Install the latest phone app to send texts directly."
             : cap?.permission
               ? cap.defaultSim
                 ? "Permission allowed · Default SIM available"
@@ -94,18 +97,18 @@ function SosSetupContent() {
         />
       )}
       <Row
-        title="Twilio fallback"
-        subtitle="Use the configured server relay only if SIM sending is unavailable or clearly fails. Requires sign-in and internet; provider charges apply."
+        title="Backup SMS"
+        subtitle="If your phone cannot send a text, try a backup message over the internet. Sign-in is required and messaging charges may apply."
         end={
           <Switch
-            accessibilityLabel="Enable Twilio fallback"
+            accessibilityLabel="Enable Backup SMS"
             value={preferences.relay}
             onValueChange={(relay) => setPreferences((p) => ({ ...p, relay }))}
             trackColor={{ true: colors.jade }}
           />
         }
       />
-      <T kind="label">Pilot area</T>
+      <T kind="label">Your area</T>
       {PILOT_REGIONS.map((r) => (
         <Row
           key={r.id}
@@ -117,7 +120,7 @@ function SosSetupContent() {
       ))}
       <Row
         title="Nearby emergency volunteers"
-        subtitle="Only verified, on-duty responders in enabled service areas can receive an offer. Precise location is released after authorized acceptance."
+        subtitle="Only approved responders who are available in your area can receive a request. Your precise location is shared after they accept."
         end={
           <Switch
             accessibilityLabel="Allow nearby responder offers"
@@ -131,7 +134,7 @@ function SosSetupContent() {
       />
       <Row
         title="Police routing"
-        subtitle="Only an onboarded police recipient with a verified jurisdiction can receive an alert. Directory listing alone does not enable dispatch."
+        subtitle="Police alerts are available only where a police team has joined Victim Voice. You can always call 112 yourself."
         end={
           <Switch
             accessibilityLabel="Allow verified police routing"
@@ -143,10 +146,10 @@ function SosSetupContent() {
           />
         }
       />
-      <Notice text="Enabling cloud channels shares the selected contact numbers, your chosen alert name and optional location with the SOS backend. Twilio receives a number/message only for relay attempts. Notes and case evidence are not included. Saving contacts alone sends nothing." />
+      <Notice text="Your alert shares your chosen name, selected contacts and any location you include. Backup SMS uses a messaging service to reach your contacts. Private notes and support files stay separate. Saving a contact does not send a message." />
       {!session && (
         <Button
-          title="Sign in for cloud channels"
+          title="Sign in for backup messages"
           tone="outline"
           onPress={() => router.push("/login")}
         />
@@ -181,7 +184,7 @@ function SosSetupContent() {
         }}
       />
       <Button
-        title="Check backend configuration"
+        title="Check message availability"
         icon="refresh-cw"
         tone="outline"
         busy={busy}
@@ -189,7 +192,7 @@ function SosSetupContent() {
       />
       {cloud && (
         <Notice
-          text={`Twilio relay: ${cloud.relay ? "configured" : "not configured"}. Responder push: ${cloud.push ? "configured" : "not configured"}. Geographic service areas and receiving teams must also be verified by a supervisor.`}
+          text={`Backup messages: ${cloud.relay ? "available" : "unavailable"}. Nearby responder notifications: ${cloud.push ? "available" : "unavailable"}. Nearby help is available only where a response team is operating.`}
         />
       )}
       <Button
@@ -236,7 +239,17 @@ export function ActiveSos() {
         ...v,
         sos:
           v.sos?.id === event.id
-            ? { ...v.sos, status, closePending: Boolean(session && (v.sos.cloudCreated || v.sos.preferences.relay || v.sos.preferences.volunteers || v.sos.preferences.police)) }
+            ? {
+                ...v.sos,
+                status,
+                closePending: Boolean(
+                  session &&
+                  (v.sos.cloudCreated ||
+                    v.sos.preferences.relay ||
+                    v.sos.preferences.volunteers ||
+                    v.sos.preferences.police),
+                ),
+              }
             : v.sos,
       }));
       if (session && event.cloudCreated) {
@@ -289,7 +302,9 @@ export function ActiveSos() {
                 <T kind="label">{c.name}</T>
                 <T>SIM: {c.state === "ready" ? "preparing" : c.state}</T>
                 {remote && remote.state.startsWith("relay_") && (
-                  <T>Twilio: {remote.state.slice(6).replaceAll("_", " ")}</T>
+                  <T>
+                    Backup SMS: {remote.state.slice(6).replaceAll("_", " ")}
+                  </T>
                 )}
               </View>
             );
@@ -301,7 +316,7 @@ export function ActiveSos() {
               <T>
                 {cloud
                   ? `${cloud.offers} offers · ${cloud.accepted} accepted`
-                  : "Cloud dispatch has not been confirmed."}
+                  : "Checking nearby help status…"}
               </T>
               <T>
                 Police:{" "}

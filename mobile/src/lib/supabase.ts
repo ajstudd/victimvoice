@@ -31,7 +31,7 @@ export function accountClient(session: Session) {
   );
 }
 export async function googleSignIn() {
-  if (!backendConfigured) throw new Error("Supabase has not been configured.");
+  if (!backendConfigured) throw new Error("Sign-in is unavailable right now. Please try again later.");
   if (Platform.OS === "web")
     throw new Error(
       "Use the installed Android app for Google sign-in, or the existing website. Phone sign-in is available in this preview.",
@@ -55,12 +55,12 @@ export async function googleSignIn() {
 export function cloudError(e: unknown) {
   const msg = (e as { message?: string })?.message || "Please try again.";
   if (/PGRST202|42883/.test((e as { code?: string })?.code || ""))
-    return "The support workspace needs its Supabase setup script. Existing support messages are still saved.";
+    return "Support is temporarily unavailable. Please try again later.";
   if (
     /schema cache|does not exist|permission denied.*vv_|Could not find.*vv_/i.test(
       msg,
     )
   )
-    return "The mobile backend needs its setup script. Your on-device data is still available.";
+    return "This service is temporarily unavailable. Notes saved on your phone remain available.";
   return msg;
 }

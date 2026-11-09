@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { View, Pressable, Switch, AppState, Platform } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { View, Pressable, Switch, AppState } from "react-native";
+import { router, useFocusEffect, Redirect } from "expo-router";
 import { useAudioPlayer } from "expo-audio";
-import { Accelerometer } from "expo-sensors";
+
 import { useApp, uuid } from "../state/AppState";
 import {
   Page,
@@ -16,17 +16,11 @@ import {
   s,
   colors,
 } from "./ui";
+import { createSos, hasActiveSos } from "../lib/create-sos";
 import { defaultSosPreferences } from "../lib/sos-client";
 import { freshSosLocation, validateSosContacts } from "../../../shared/sos";
 import { composeHelp, currentLocation, openCall } from "../lib/actions";
-import {
-  advanceCheckIn,
-  CheckIn,
-  magnitude,
-  ShakeDetector,
-  remainingSeconds,
-  isFreshLocation,
-} from "../lib/safety";
+import { isFreshLocation } from "../lib/safety";
 export function Help() {
   const { vault, save, ready } = useApp();
   const [selected, setSelected] = useState<string[] | null>(null);
@@ -111,23 +105,20 @@ export function Help() {
       const chosen = validateSosContacts(
         contacts.filter((c) => recipients.includes(c.id)),
       );
-      const id = uuid();
-      await save((v) => ({
-        ...v,
-        sos: {
-          id,
-          createdAt: Date.now(),
-          status: "active",
-          preferences,
-          location: freshSosLocation(location),
-          contacts: chosen.map((c) => ({
-            ...c,
-            attemptId: uuid(),
-            state: "ready",
-            fallbackAllowed: false,
-          })),
-        },
-      }));
+      await save((v) =>
+        hasActiveSos(v.sos, Date.now())
+          ? v
+          : {
+              ...v,
+              sos: createSos(
+                preferences,
+                chosen,
+                freshSosLocation(location),
+                uuid,
+                Date.now(),
+              ),
+            },
+      );
       router.push("/sos");
     } finally {
       starting.current = false;
@@ -184,7 +175,7 @@ export function Help() {
       />
       <Row
         title="Safety message setup"
-        subtitle="SIM permission, Twilio fallback and responder choices"
+        subtitle="SIM permission, Backup SMS and responder choices"
         icon="settings"
         onPress={() => router.push("/sos-setup")}
       />
@@ -196,9 +187,9 @@ export function Help() {
         onPress={() => run(compose)}
       />
       <T kind="caption" color="#D6CBDF">
-        Direct sending uses your saved setup. Cloud channels require sign-in,
-        internet and backend configuration. SIM sending requires the new Android
-        build and permission.
+        Texts use your saved contacts and message choices. Allow SMS on your
+        phone to send directly. Backup messages need sign-in and an internet
+        connection.
       </T>
       <View style={{ gap: 14 }}>
         <T kind="caption" color="#D6CBDF">
@@ -335,240 +326,7 @@ export function Help() {
   );
 }
 export function Safety() {
-  const { vault } = useApp();
-  const [check, setCheck] = useState<CheckIn>({
-    state: "idle",
-    deadline: null,
-  });
-  const [now, setNow] = useState(() => Date.now());
-  const [message, setMessage] = useState("");
-  const subscription = useRef<{ remove: () => void } | null>(null);
-  const freeFall = useRef(0);
-  const shake = useRef(new ShakeDetector());
-  useFocusEffect(
-    useCallback(
-      () => () => {
-        subscription.current?.remove();
-        subscription.current = null;
-        setCheck({ state: "idle", deadline: null });
-      },
-      [],
-    ),
-  );
-  function stop() {
-    subscription.current?.remove();
-    subscription.current = null;
-    setCheck((c) => advanceCheckIn(c, "stop", Date.now()));
-  }
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (v) => {
-      if (v !== "active") {
-        subscription.current?.remove();
-        subscription.current = null;
-        setCheck({ state: "idle", deadline: null });
-        setMessage(
-          "Rehearsal paused when the app left the foreground. No messages were sent.",
-        );
-      }
-    });
-    return () => {
-      sub.remove();
-      subscription.current?.remove();
-    };
-  }, []);
-  useEffect(() => {
-    if (check.state !== "countdown") return;
-    const tick = () => {
-      const n = Date.now();
-      setNow(n);
-      setCheck((c) => advanceCheckIn(c, "expire", n));
-    };
-    tick();
-    const id = setInterval(tick, 200);
-    return () => clearInterval(id);
-  }, [check.state]);
-  async function arm() {
-    try {
-      if (Platform.OS === "web") {
-        setMessage(
-          "Sensors are not enabled in the browser preview. You can rehearse the countdown.",
-        );
-        setCheck({ state: "armed", deadline: null });
-        return;
-      }
-      if (!(await Accelerometer.isAvailableAsync()))
-        throw new Error(
-          "This device has no available motion sensor. Use the simulated check-in.",
-        );
-      const permission = await Accelerometer.requestPermissionsAsync();
-      if (!permission.granted)
-        throw new Error(
-          "Motion access was not granted. You can still rehearse manually.",
-        );
-      subscription.current?.remove();
-      Accelerometer.setUpdateInterval(100);
-      subscription.current = Accelerometer.addListener(({ x, y, z }) => {
-        const n = Date.now(),
-          g = magnitude(x, y, z);
-        if (shake.current.sample(g, n)) {
-          setNow(n);
-          setCheck((c) => advanceCheckIn(c, "trigger", n));
-        }
-        if (g < 0.35) freeFall.current = n;
-        if (g > 2.7 && freeFall.current && n - freeFall.current < 1000) {
-          freeFall.current = 0;
-          setNow(n);
-          setCheck((c) => advanceCheckIn(c, "trigger", n));
-        }
-      });
-      setCheck({ state: "armed", deadline: null });
-      setMessage(
-        "Foreground rehearsal running. Three strong shakes within 1.5 seconds start the check-in countdown. No alert is sent by this rehearsal. Do not drop your phone.",
-      );
-    } catch (e) {
-      setMessage((e as Error).message);
-    }
-  }
-  function simulate() {
-    setNow(Date.now());
-    setCheck(
-      advanceCheckIn({ state: "armed", deadline: null }, "trigger", Date.now()),
-    );
-  }
-  if (check.state === "countdown")
-    return (
-      <Page back title="Active safety · Rehearsal" dark>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            gap: 24,
-            paddingVertical: 20,
-          }}
-        >
-          <T
-            kind="title"
-            color={colors.paper}
-            style={{ fontSize: 44, lineHeight: 52 }}
-          >
-            Are you okay?
-          </T>
-          <T color="#D6CBDF">A motion check-in has started.</T>
-          <T
-            color={colors.paper}
-            style={{
-              fontFamily: "Lora_600SemiBold",
-              fontSize: 132,
-              lineHeight: 150,
-              textAlign: "center",
-            }}
-          >
-            {remainingSeconds(check.deadline!, now)}
-          </T>
-          <T color="#D6CBDF" style={{ textAlign: "center" }}>
-            seconds until rehearsal completes
-          </T>
-          <View
-            style={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: "#5D4B69",
-              overflow: "hidden",
-            }}
-          >
-            <View
-              style={{
-                height: 6,
-                width: `${remainingSeconds(check.deadline!, now) * 5}%`,
-                backgroundColor: "#EBA28D",
-              }}
-            />
-          </View>
-          <T color="#D6CBDF">No real alerts will be sent.</T>
-          <Button
-            title="I'm okay"
-            tone="cream"
-            onPress={() => {
-              subscription.current?.remove();
-              setCheck((c) => advanceCheckIn(c, "cancel", Date.now()));
-            }}
-          />
-          <Button
-            title="Open real help actions"
-            tone="coral"
-            onPress={() => {
-              stop();
-              router.replace("/help");
-            }}
-          />
-        </View>
-      </Page>
-    );
-  return (
-    <Page back title="Active safety">
-      <Notice text="While armed and on screen, three strong shakes within 1.5 seconds can start the check-in countdown. This is a rehearsal; it does not send alerts." />
-      <T kind="title">A check-in,{"\n"}when you need it.</T>
-      <Notice text="Foreground prototype · Rehearsal only. Automatic alerts and background monitoring are not enabled." />
-      <T>
-        Explore the 20-second check-in safely. A dropped phone can trigger a
-        check-in; it does not establish that someone is in danger.
-      </T>
-      <Row
-        title="Check-in countdown"
-        subtitle="20 seconds · Cancel at any time"
-        icon="clock"
-      />
-      <Row
-        title="Your circle"
-        subtitle={
-          vault.contacts.map((c) => c.name).join(", ") ||
-          "No contacts added yet"
-        }
-        icon="users"
-        onPress={() => router.push("/circle")}
-      />
-      <Row
-        title="Automatic contact alerts"
-        subtitle="Not enabled in this build"
-        icon="send"
-      />
-      {(check.state === "completed" || check.state === "cancelled") && (
-        <Notice
-          text={
-            check.state === "completed"
-              ? "Rehearsal finished. No contacts were notified."
-              : "Check-in canceled. No contacts were notified."
-          }
-          tone="success"
-        />
-      )}
-      <Button
-        title={
-          check.state === "armed"
-            ? "Stop rehearsal"
-            : "Start on-screen rehearsal"
-        }
-        icon="shield"
-        onPress={check.state === "armed" ? stop : arm}
-      />
-      <Button
-        title="Simulate the 20-second check-in"
-        tone="outline"
-        icon="play"
-        onPress={simulate}
-      />
-      {Boolean(message) && <Notice text={message} />}
-      <T kind="caption">
-        Motion detection is experimental and works only while this screen is
-        open. It stops when you leave. Manual help remains available.
-      </T>
-      <Button
-        title="Get help now"
-        tone="coral"
-        onPress={() => router.push("/help")}
-      />
-    </Page>
-  );
+  return <Redirect href="/settings" />;
 }
 export function Nearby() {
   return (
