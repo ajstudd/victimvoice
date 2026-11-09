@@ -39,3 +39,21 @@ export function advanceCheckIn(
 export function isFreshLocation(timestamp: number, now: number) {
   return now >= timestamp && now - timestamp <= 60_000;
 }
+
+// Require distinct high/low pulses, not a sustained acceleration or orientation change.
+export class ShakeDetector {
+  private peaks: number[] = [];
+  private above = false;
+  private lastTrigger = -Infinity;
+  sample(g: number, at: number) {
+    if (!Number.isFinite(g) || !Number.isFinite(at)) return false;
+    if (g < 1.5) this.above = false;
+    if (g < 2.4 || this.above) return false;
+    this.above = true;
+    this.peaks = [...this.peaks.filter((t) => at - t < 1500), at];
+    if (this.peaks.length < 3 || at - this.lastTrigger < 10000) return false;
+    this.peaks = [];
+    this.lastTrigger = at;
+    return true;
+  }
+}

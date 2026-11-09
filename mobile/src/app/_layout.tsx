@@ -11,6 +11,7 @@ import { colors } from "../components/ui";
 import { SosNotifications } from "../components/SosNotifications";
 import { SosCoordinator } from "../components/SosCoordinator";
 import { ScreenPrivacy } from "../components/ScreenPrivacy";
+import { JourneyLiveCoordinator } from "../components/JourneyLive";
 export default function Layout() {
   const [loaded, error] = useFonts({
     Lora_600SemiBold,
@@ -35,6 +36,7 @@ export default function Layout() {
       <AppProvider>
         <ScreenPrivacy />
         <SosCoordinator />
+        <JourneyLiveCoordinator />
         <SosNotifications />
         <StatusBar style="dark" />
         <View

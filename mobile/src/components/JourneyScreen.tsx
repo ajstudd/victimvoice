@@ -15,6 +15,7 @@ import {
 } from "./ui";
 import { useApp } from "../state/AppState";
 import { confirmAction } from "../lib/confirm";
+import { JourneyLiveControls } from "./JourneyLive";
 export function Journey() {
   const { vault, save, ready } = useApp();
   const [destination, setDestination] = useState("");
@@ -47,7 +48,13 @@ export function Journey() {
     }
   }
   async function finish() {
-    await save((v) => ({ ...v, journey: undefined }));
+    await save((v) => ({
+      ...v,
+      journey: undefined,
+      liveJourney: v.liveJourney
+        ? { ...v.liveJourney, stopping: true }
+        : undefined,
+    }));
     setMessage("Your local check-in is finished. No contacts were notified.");
   }
   return (
@@ -57,6 +64,7 @@ export function Journey() {
         <T kind="title">A moment to{"\n"}check in.</T>
         <T>Your destination, your time. A small pause along the way.</T>
       </View>
+      <JourneyLiveControls />
       {journey ? (
         <>
           <View

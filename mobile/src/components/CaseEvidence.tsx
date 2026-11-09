@@ -1,8 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Image, AppState, Platform, Linking, Pressable } from "react-native";
+import {
+  View,
+  Image,
+  AppState,
+  Platform,
+  Linking,
+  Pressable,
+} from "react-native";
 import { useFocusEffect } from "expo-router";
 import * as Picker from "expo-document-picker";
 import * as Crypto from "expo-crypto";
+import * as Sharing from "expo-sharing";
 import { File, Paths } from "expo-file-system";
 import { fetch as expoFetch } from "expo/fetch";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -30,7 +38,15 @@ const digest = async (bytes: ArrayBuffer) =>
     (n) => n.toString(16).padStart(2, "0"),
   ).join("");
 type Preview = { item: EvidenceItem; uri?: string; link?: string };
-export function CaseEvidence({ requestId }: { requestId: string }) {
+export function CaseEvidence({
+  requestId,
+  mode = "library",
+  onShared,
+}: {
+  requestId: string;
+  mode?: "library" | "chat" | "compose";
+  onShared?: () => void;
+}) {
   const [items, setItems] = useState<EvidenceItem[]>([]);
   const [label, setLabel] = useState("");
   const [link, setLink] = useState("");
@@ -128,6 +144,7 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
       setLabel("");
       setLinkMode(false);
       await refresh();
+      onShared?.();
     } catch (e) {
       setError(cloudError(e));
     } finally {
@@ -225,183 +242,196 @@ export function CaseEvidence({ requestId }: { requestId: string }) {
   const ready = selected ? true : Boolean(link.trim());
   return (
     <View style={{ gap: 16 }}>
-      <View style={s.between}>
-        <T kind="heading">Files & links</T>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Refresh files"
-          onPress={refresh}
-          style={{
-            width: 48,
-            height: 48,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon name="refresh-cw" size={18} />
-        </Pressable>
-      </View>
-      {items.length ? (
-        <View>
-          {items.map((item) => (
-            <Row
-              key={item.id}
-              title={item.label}
-              subtitle={`${item.kind === "link" ? "Link" : evidenceSize(item.byte_size)} · Tap to open`}
-              icon={
-                item.kind === "link"
-                  ? "link"
-                  : item.mime_type?.startsWith("image/")
-                    ? "image"
-                    : item.mime_type?.startsWith("video/")
-                      ? "film"
-                      : "music"
-              }
-              onPress={() => {
-                if (!busy) void view(item);
-              }}
-            />
-          ))}
-        </View>
-      ) : (
-        <T>Nothing shared yet. Screenshots, photos, voice notes or links can help the team understand.</T>
-      )}
-      {preview && (
-        <View style={[s.panel, { backgroundColor: colors.peach }]}>
+      {mode !== "compose" && (
+        <>
           <View style={s.between}>
-            <T kind="label" style={{ flex: 1 }}>
-              {preview.item.label}
+            <T kind="heading">
+              {mode === "chat" ? "Shared in this chat" : "Files & links"}
             </T>
-            <Button title="Close" tone="outline" onPress={close} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Refresh files"
+              onPress={refresh}
+              style={{
+                width: 48,
+                height: 48,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="refresh-cw" size={18} />
+            </Pressable>
           </View>
-          <T kind="caption">
-            Private file · Case #{requestId.slice(0, 8)} ·{" "}
-            {new Date().toLocaleDateString()}
-          </T>
-          {preview.link ? (
+          {items.length ? (
+            <View>
+              {items.map((item) => (
+                <Row
+                  key={item.id}
+                  title={item.label}
+                  subtitle={`${item.kind === "link" ? "Link" : evidenceSize(item.byte_size)} · ${new Date(item.created_at).toLocaleString()} · Tap to open`}
+                  icon={
+                    item.kind === "link"
+                      ? "link"
+                      : item.mime_type?.startsWith("image/")
+                        ? "image"
+                        : item.mime_type?.startsWith("video/")
+                          ? "film"
+                          : item.mime_type?.startsWith("audio/")
+                            ? "music"
+                            : "file-text"
+                  }
+                  onPress={() => {
+                    if (!busy) void view(item);
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <T>
+              Nothing shared yet. Screenshots, photos, voice notes or links can
+              help the team understand.
+            </T>
+          )}
+          {preview && (
+            <View style={[s.panel, { backgroundColor: colors.peach }]}>
+              <View style={s.between}>
+                <T kind="label" style={{ flex: 1 }}>
+                  {preview.item.label}
+                </T>
+                <Button title="Close" tone="outline" onPress={close} />
+              </View>
+              <T kind="caption">
+                Private file · Case #{requestId.slice(0, 8)} ·{" "}
+                {new Date().toLocaleDateString()}
+              </T>
+              {preview.link ? (
+                <>
+                  <Notice text="This opens an external website. Its owner may see your visit; app screenshot protection does not apply there." />
+                  <T selectable>{preview.link}</T>
+                  <Button
+                    title="Open external website"
+                    tone="outline"
+                    onPress={() => {
+                      void Linking.openURL(preview.link!).catch(() =>
+                        setError(
+                          "Could not open this website. Please check your connection.",
+                        ),
+                      );
+                    }}
+                  />
+                </>
+              ) : (
+                preview.uri && (
+                  <NativeMedia
+                    uri={preview.uri}
+                    mime={preview.item.mime_type || ""}
+                    label={preview.item.label}
+                  />
+                )
+              )}
+            </View>
+          )}
+        </>
+      )}
+      {mode !== "chat" && (
+        <View style={[s.panel, { backgroundColor: colors.lilac }]}>
+          <T kind="label">Share something new</T>
+          {selected ? (
             <>
-              <Notice text="This opens an external website. Its owner may see your visit; app screenshot protection does not apply there." />
-              <T selectable>{preview.link}</T>
-              <Button
-                title="Open external website"
-                tone="outline"
-                onPress={() => {
-                  void Linking.openURL(preview.link!).catch(() =>
-                    setError(
-                      "Could not open this website. Please check your connection.",
-                    ),
-                  );
-                }}
+              <View style={[s.row, { alignItems: "center" }]}>
+                <Icon name="file" size={18} />
+                <T kind="label" numberOfLines={1} style={{ flex: 1 }}>
+                  {selected.name}
+                </T>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove selected file"
+                  disabled={busy}
+                  onPress={() => {
+                    if (picked.current?.exists) picked.current.delete();
+                    picked.current = null;
+                    setSelected(null);
+                    setLabel("");
+                  }}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Icon name="x" size={18} />
+                </Pressable>
+              </View>
+              <Field
+                label="Name it so you can find it later"
+                value={label}
+                onChangeText={setLabel}
+                maxLength={160}
               />
             </>
-          ) : (
-            preview.uri && (
-              <NativeMedia
-                uri={preview.uri}
-                mime={preview.item.mime_type || ""}
-                label={preview.item.label}
+          ) : linkMode ? (
+            <>
+              <Field
+                label="Link"
+                value={link}
+                onChangeText={setLink}
+                autoCapitalize="none"
+                keyboardType="url"
+                placeholder="https://"
+                maxLength={2048}
               />
-            )
-          )}
-        </View>
-      )}
-      <View style={[s.panel, { backgroundColor: colors.lilac }]}>
-        <T kind="label">Share something new</T>
-        {selected ? (
-          <>
-            <View style={[s.row, { alignItems: "center" }]}>
-              <Icon name="file" size={18} />
-              <T kind="label" numberOfLines={1} style={{ flex: 1 }}>
-                {selected.name}
-              </T>
+              <Field
+                label="Short description (optional)"
+                value={label}
+                onChangeText={setLabel}
+                maxLength={160}
+              />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Remove selected file"
-                disabled={busy}
                 onPress={() => {
-                  if (picked.current?.exists) picked.current.delete();
-                  picked.current = null;
-                  setSelected(null);
-                  setLabel("");
+                  setLinkMode(false);
+                  setLink("");
                 }}
-                style={{
-                  width: 48,
-                  height: 48,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={{ minHeight: 44, justifyContent: "center" }}
               >
-                <Icon name="x" size={18} />
+                <T style={s.link}>Choose a file instead</T>
               </Pressable>
-            </View>
-            <Field
-              label="Name it so you can find it later"
-              value={label}
-              onChangeText={setLabel}
-              maxLength={160}
-            />
-          </>
-        ) : linkMode ? (
-          <>
-            <Field
-              label="Link"
-              value={link}
-              onChangeText={setLink}
-              autoCapitalize="none"
-              keyboardType="url"
-              placeholder="https://"
-              maxLength={2048}
-            />
-            <Field
-              label="Short description (optional)"
-              value={label}
-              onChangeText={setLabel}
-              maxLength={160}
-            />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                setLinkMode(false);
-                setLink("");
-              }}
-              style={{ minHeight: 44, justifyContent: "center" }}
-            >
-              <T style={s.link}>Choose a file instead</T>
-            </Pressable>
-          </>
-        ) : (
-          <>
+            </>
+          ) : (
+            <>
+              <Button
+                title="Choose media or a document"
+                icon="paperclip"
+                tone="cream"
+                onPress={choose}
+                disabled={busy}
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setLinkMode(true)}
+                style={{ minHeight: 44, justifyContent: "center" }}
+              >
+                <T style={s.link}>Share a link instead</T>
+              </Pressable>
+            </>
+          )}
+          {(selected || linkMode) && (
             <Button
-              title="Choose a photo, video or audio file"
-              icon="paperclip"
-              tone="cream"
-              onPress={choose}
-              disabled={busy}
+              title="Share with support team"
+              disabled={!ready}
+              busy={busy}
+              onPress={() =>
+                void share(label.trim() || selected?.name || linkLabel())
+              }
             />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setLinkMode(true)}
-              style={{ minHeight: 44, justifyContent: "center" }}
-            >
-              <T style={s.link}>Share a link instead</T>
-            </Pressable>
-          </>
-        )}
-        {(selected || linkMode) && (
-          <Button
-            title="Share with support team"
-            disabled={!ready}
-            busy={busy}
-            onPress={() =>
-              void share(label.trim() || selected?.name || linkLabel())
-            }
-          />
-        )}
-        <T kind="caption">
-          Up to 10 MB each. Your support team can open what you share, and each
-          view is recorded. Shared files can’t be changed afterwards.
-        </T>
-      </View>
+          )}
+          <T kind="caption">
+            Up to 10 MB each. Your support team can open what you share, and
+            each view is recorded. Shared files can’t be changed afterwards.
+          </T>
+        </View>
+      )}
       {Boolean(error) && <Notice text={error} tone="error" />}
     </View>
   );
@@ -415,6 +445,7 @@ function NativeMedia({
   mime: string;
   label: string;
 }) {
+  const [documentError, setDocumentError] = useState("");
   if (mime.startsWith("image/"))
     return (
       <Image
@@ -423,6 +454,45 @@ function NativeMedia({
         style={{ width: "100%", height: 300, borderRadius: 10 }}
         resizeMode="contain"
       />
+    );
+  if (
+    mime === "application/pdf" ||
+    mime === "text/plain" ||
+    mime ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  )
+    return (
+      <View style={{ gap: 12 }}>
+        <Notice text="Opening in another app can create a copy there. Screenshot protection does not apply outside Victim Voice." />
+        {Platform.OS === "web" ? (
+          <a href={uri} download={label}>
+            Open document
+          </a>
+        ) : (
+          <Button
+            title="Open document in another app"
+            tone="outline"
+            onPress={async () => {
+              const copy = new File(
+                Paths.cache,
+                `vv-document-${Crypto.randomUUID()}.${mime === "application/pdf" ? "pdf" : mime === "text/plain" ? "txt" : "docx"}`,
+              );
+              try {
+                copy.create();
+                copy.write(new Uint8Array(await new File(uri).arrayBuffer()));
+                await Sharing.shareAsync(copy.uri, { mimeType: mime });
+              } catch {
+                setDocumentError(
+                  "Could not open this document. Please try again.",
+                );
+              } finally {
+                if (copy.exists) copy.delete();
+              }
+            }}
+          />
+        )}
+        {Boolean(documentError) && <Notice text={documentError} tone="error" />}
+      </View>
     );
   if (mime.startsWith("video/")) return <VideoEvidence uri={uri} />;
   return <AudioEvidence uri={uri} />;

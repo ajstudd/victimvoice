@@ -30,6 +30,9 @@ test("public evidence links accept HTTPS and reject credentials, scripts and loc
 test("uploads accept bounded media and reject active HTML or SVG", () => {
   validateEvidenceFile(MAX_EVIDENCE_BYTES, "image/png", "Chosen evidence");
   validateEvidenceFile(10, "video/mp4", "Chosen clip");
+  validateEvidenceFile(100, "application/pdf", "Document");
+  validateEvidenceFile(100, "text/plain", "Statement");
+  validateEvidenceFile(100, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Statement document");
   for (const [bytes, mime, label] of [
     [0, "image/png", "Empty"],
     [MAX_EVIDENCE_BYTES + 1, "image/png", "Too large"],

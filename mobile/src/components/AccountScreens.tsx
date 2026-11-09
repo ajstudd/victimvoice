@@ -259,7 +259,7 @@ function SettingsContent() {
         />
         <Row
           title="Location sharing"
-          subtitle="Only when you choose to include a fresh snapshot"
+          subtitle="A chosen snapshot, or live updates during an enabled foreground journey"
           icon="map-pin"
         />
         <Row

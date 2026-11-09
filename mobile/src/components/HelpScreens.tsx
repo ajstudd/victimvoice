@@ -23,6 +23,7 @@ import {
   advanceCheckIn,
   CheckIn,
   magnitude,
+  ShakeDetector,
   remainingSeconds,
   isFreshLocation,
 } from "../lib/safety";
@@ -343,6 +344,7 @@ export function Safety() {
   const [message, setMessage] = useState("");
   const subscription = useRef<{ remove: () => void } | null>(null);
   const freeFall = useRef(0);
+  const shake = useRef(new ShakeDetector());
   useFocusEffect(
     useCallback(
       () => () => {
@@ -408,6 +410,10 @@ export function Safety() {
       subscription.current = Accelerometer.addListener(({ x, y, z }) => {
         const n = Date.now(),
           g = magnitude(x, y, z);
+        if (shake.current.sample(g, n)) {
+          setNow(n);
+          setCheck((c) => advanceCheckIn(c, "trigger", n));
+        }
         if (g < 0.35) freeFall.current = n;
         if (g > 2.7 && freeFall.current && n - freeFall.current < 1000) {
           freeFall.current = 0;
@@ -417,7 +423,7 @@ export function Safety() {
       });
       setCheck({ state: "armed", deadline: null });
       setMessage(
-        "Foreground rehearsal running. Do not drop your phone; use the simulation button to test.",
+        "Foreground rehearsal running. Three strong shakes within 1.5 seconds start the check-in countdown. No alert is sent by this rehearsal. Do not drop your phone.",
       );
     } catch (e) {
       setMessage((e as Error).message);
@@ -500,6 +506,7 @@ export function Safety() {
     );
   return (
     <Page back title="Active safety">
+      <Notice text="While armed and on screen, three strong shakes within 1.5 seconds can start the check-in countdown. This is a rehearsal; it does not send alerts." />
       <T kind="title">A check-in,{"\n"}when you need it.</T>
       <Notice text="Foreground prototype · Rehearsal only. Automatic alerts and background monitoring are not enabled." />
       <T>

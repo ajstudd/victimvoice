@@ -1,5 +1,12 @@
 import React, { useCallback, useRef, useState } from "react";
-import { View, Pressable, Switch, ScrollView, TextInput } from "react-native";
+import {
+  View,
+  Pressable,
+  Switch,
+  ScrollView,
+  TextInput,
+  Modal,
+} from "react-native";
 import { router } from "expo-router";
 import {
   Page,
@@ -612,6 +619,8 @@ function RequestContent({ id }: { id?: string }) {
       setBusy(false);
     }
   }
+  const [attachments, setAttachments] = useState(false);
+  const [filesRevision, setFilesRevision] = useState(0);
   const status = record ? statusCopy(record.status) : null;
   return (
     <Page
@@ -655,7 +664,7 @@ function RequestContent({ id }: { id?: string }) {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Share a photo, file or link"
-                onPress={() => setSection("files")}
+                onPress={() => setAttachments(true)}
                 style={{
                   width: 48,
                   height: 54,
@@ -699,6 +708,37 @@ function RequestContent({ id }: { id?: string }) {
         ) : undefined
       }
     >
+      {attachments && record && (
+        <Modal
+          visible
+          animationType="slide"
+          onRequestClose={() => setAttachments(false)}
+        >
+          <ScrollView
+            contentContainerStyle={{
+              padding: 24,
+              paddingTop: 55,
+              gap: 16,
+              backgroundColor: colors.paper,
+            }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Button
+              title="Back to conversation"
+              tone="outline"
+              onPress={() => setAttachments(false)}
+            />
+            <CaseEvidence
+              requestId={record.id}
+              mode="compose"
+              onShared={() => {
+                setFilesRevision((r) => r + 1);
+                setAttachments(false);
+              }}
+            />
+          </ScrollView>
+        </Modal>
+      )}
       {loading ? (
         <T>Loading conversation…</T>
       ) : record && status && data?.page === page ? (
@@ -753,7 +793,9 @@ function RequestContent({ id }: { id?: string }) {
                   color={section === key ? colors.ink : colors.muted}
                   style={{
                     fontFamily:
-                      section === key ? "Inter_600SemiBold" : "Inter_400Regular",
+                      section === key
+                        ? "Inter_600SemiBold"
+                        : "Inter_400Regular",
                   }}
                 >
                   {label}
@@ -797,7 +839,10 @@ function RequestContent({ id }: { id?: string }) {
               />
               <View style={{ gap: 10 }}>
                 {[
-                  ["eye-off", "Volunteers never see your email or phone number."],
+                  [
+                    "eye-off",
+                    "Volunteers never see your email or phone number.",
+                  ],
                   [
                     "user-x",
                     "Turning volunteers off removes their access straight away.",
@@ -808,8 +853,15 @@ function RequestContent({ id }: { id?: string }) {
                   ],
                   ["activity", "Supervisors can review who opened your files."],
                 ].map(([icon, line]) => (
-                  <View key={line} style={[s.row, { alignItems: "flex-start" }]}>
-                    <Icon name={icon as "lock"} size={16} color={colors.muted} />
+                  <View
+                    key={line}
+                    style={[s.row, { alignItems: "flex-start" }]}
+                  >
+                    <Icon
+                      name={icon as "lock"}
+                      size={16}
+                      color={colors.muted}
+                    />
                     <T kind="caption" style={{ flex: 1 }}>
                       {line}
                     </T>
@@ -822,47 +874,47 @@ function RequestContent({ id }: { id?: string }) {
           {section === "conversation" && (
             <>
               {!more && (
-              <View
-                style={{
-                  alignSelf: "flex-end",
-                  maxWidth: "88%",
-                  gap: 4,
-                }}
-              >
                 <View
                   style={{
-                    backgroundColor: colors.ink,
-                    padding: 14,
-                    borderRadius: 18,
-                    borderBottomRightRadius: 6,
+                    alignSelf: "flex-end",
+                    maxWidth: "88%",
+                    gap: 4,
                   }}
                 >
-                  <T
-                    color={colors.paper}
-                    numberOfLines={expanded ? undefined : 6}
+                  <View
+                    style={{
+                      backgroundColor: colors.ink,
+                      padding: 14,
+                      borderRadius: 18,
+                      borderBottomRightRadius: 6,
+                    }}
                   >
-                    {record.description}
-                  </T>
-                  {record.description.length > 240 && (
-                    <Pressable
-                      accessibilityRole="button"
-                      style={{ minHeight: 40, justifyContent: "center" }}
-                      onPress={() => setExpanded((v) => !v)}
+                    <T
+                      color={colors.paper}
+                      numberOfLines={expanded ? undefined : 6}
                     >
-                      <T
-                        kind="caption"
-                        color={colors.paper}
-                        style={{ textDecorationLine: "underline" }}
+                      {record.description}
+                    </T>
+                    {record.description.length > 240 && (
+                      <Pressable
+                        accessibilityRole="button"
+                        style={{ minHeight: 40, justifyContent: "center" }}
+                        onPress={() => setExpanded((v) => !v)}
                       >
-                        {expanded ? "Show less" : "Show full message"}
-                      </T>
-                    </Pressable>
-                  )}
+                        <T
+                          kind="caption"
+                          color={colors.paper}
+                          style={{ textDecorationLine: "underline" }}
+                        >
+                          {expanded ? "Show less" : "Show full message"}
+                        </T>
+                      </Pressable>
+                    )}
+                  </View>
+                  <T kind="caption" style={{ textAlign: "right" }}>
+                    Your first message · {timeAgo(record.created_at)}
+                  </T>
                 </View>
-                <T kind="caption" style={{ textAlign: "right" }}>
-                  Your first message · {timeAgo(record.created_at)}
-                </T>
-              </View>
               )}
               {more && (
                 <Button
@@ -896,7 +948,10 @@ function RequestContent({ id }: { id?: string }) {
                             borderBottomLeftRadius: mine ? 18 : 6,
                           }}
                         >
-                          <T color={mine ? colors.paper : colors.ink} selectable>
+                          <T
+                            color={mine ? colors.paper : colors.ink}
+                            selectable
+                          >
                             {row.content}
                           </T>
                         </View>
@@ -935,6 +990,13 @@ function RequestContent({ id }: { id?: string }) {
                 check
               </T>
             </>
+          )}
+          {section === "conversation" && (
+            <CaseEvidence
+              key={`chat-${record.id}-${filesRevision}`}
+              requestId={record.id}
+              mode="chat"
+            />
           )}
           {section === "files" && (
             <CaseEvidence key={record.id} requestId={record.id} />

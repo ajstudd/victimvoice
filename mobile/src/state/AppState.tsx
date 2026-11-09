@@ -29,6 +29,7 @@ export type Note = {
 };
 export type Plan = { safePlace: string; steps: string };
 export type Vault = {
+  liveJourney?: { id: string; token: string; expiresAt: number; stopping?: boolean; lastPublishedAt?: number; error?: string };
   pushToken?: string;
   sosPreferences?: import("../lib/sos-client").SosPreferences;
   sos?: import("../lib/sos-client").LocalSos;
@@ -260,6 +261,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }
   async function signOut() {
+    if (vault.liveJourney) {
+      await save(v => ({...v, liveJourney: v.liveJourney ? {...v.liveJourney, stopping: true} : undefined}));
+    }
     if (session && vault.pushToken) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 3000);

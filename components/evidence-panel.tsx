@@ -124,8 +124,7 @@ export function EvidencePanel({
           bytes,
           hash,
         );
-      } else
-        await addEvidenceLink(getSupabase(), requestId, name, link.trim());
+      } else await addEvidenceLink(getSupabase(), requestId, name, link.trim());
       setFile(null);
       setLink("");
       setLabel("");
@@ -440,6 +439,17 @@ export function EvidencePanel({
                     controlsList="nodownload noremoteplayback"
                     disablePictureInPicture
                   />
+                ) : preview.item.mime_type === "application/pdf" ||
+                  preview.item.mime_type === "text/plain" ||
+                  preview.item.mime_type ===
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ? (
+                  <a
+                    href={preview.blobUrl}
+                    download={preview.item.label}
+                    className="support-link"
+                  >
+                    Download document to read
+                  </a>
                 ) : (
                   <audio
                     src={preview.blobUrl}

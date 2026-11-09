@@ -32,4 +32,7 @@ psql -h "$test_dir" -p 55440 -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -f "$project_dir/supabase/tests/storage-bootstrap.sql" \
   -f "$project_dir/supabase/support-workspace.sql" \
   -f "$project_dir/supabase/support-workspace.sql" \
-  -f "$project_dir/supabase/tests/support-access.sql"
+  -f "$project_dir/supabase/tests/support-access.sql" \
+  -f "$project_dir/supabase/journey-sharing.sql" \
+  -f "$project_dir/supabase/journey-sharing.sql" \
+  -f "$project_dir/supabase/tests/journey-sharing.sql"

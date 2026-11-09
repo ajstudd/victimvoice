@@ -56,7 +56,7 @@ create table if not exists public.vv_case_evidence (
  created_at timestamptz not null default now(),
  check((kind='link' and url is not null and storage_path is null and byte_size=0)
     or (kind='file' and url is null and storage_path is not null and byte_size>0 and sha256 is not null
-      and mime_type in('image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/mp4','audio/wav','audio/ogg')))
+      and mime_type in('image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/mp4','audio/wav','audio/ogg','application/pdf','text/plain','application/vnd.openxmlformats-officedocument.wordprocessingml.document')))
 );
 create index if not exists vv_evidence_case on public.vv_case_evidence(request_id,created_at desc);
 create table if not exists public.vv_evidence_leases (
@@ -321,7 +321,7 @@ language sql stable security definer set search_path='' as $$
   select 1 from public.vv_evidence_leases l where l.evidence_id=e.id and l.user_id=auth.uid() and l.expires_at>now()) else false end);
 $$;
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
- values('case-evidence','case-evidence',false,10485760,array['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/mp4','audio/wav','audio/ogg'])
+ values('case-evidence','case-evidence',false,10485760,array['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/mp4','audio/wav','audio/ogg','application/pdf','text/plain','application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
  on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
 drop policy if exists vv_evidence_upload on storage.objects;
 create policy vv_evidence_upload on storage.objects for insert to authenticated

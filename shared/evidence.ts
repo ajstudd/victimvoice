@@ -10,6 +10,9 @@ export const EVIDENCE_TYPES = [
   "audio/mp4",
   "audio/wav",
   "audio/ogg",
+  "application/pdf",
+  "text/plain",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 export type EvidenceItem = {
   id: string;
@@ -51,10 +54,10 @@ export function validateEvidenceFile(
   label: string,
 ) {
   if (!Number.isInteger(size) || size <= 0 || size > MAX_EVIDENCE_BYTES)
-    throw new Error("Choose a media file up to 10 MiB.");
+    throw new Error("Choose a file up to 10 MiB.");
   if (!EVIDENCE_TYPES.includes(mime))
     throw new Error(
-      "Supported: JPEG, PNG, WebP, GIF, MP4, WebM, MP3, M4A, WAV and OGG.",
+      "Supported: JPEG, PNG, WebP, GIF, MP4, WebM, MP3, M4A, WAV, OGG, PDF, DOCX and plain text.",
     );
   if (!label.trim() || label.trim().length > 160)
     throw new Error("Give the evidence a label of 1–160 characters.");

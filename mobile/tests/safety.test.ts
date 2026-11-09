@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  ShakeDetector,
   advanceCheckIn,
   remainingSeconds,
   normalizePhone,
@@ -34,4 +35,18 @@ test("location freshness rejects stale and future values", () => {
   assert.equal(isFreshLocation(1000, 2000), true);
   assert.equal(isFreshLocation(1000, 70000), false);
   assert.equal(isFreshLocation(3000, 2000), false);
+});
+
+test("strong shakes need three distinct pulses and have a cooldown", () => {
+  const d = new ShakeDetector();
+  assert.equal(d.sample(3, 0), false);
+  assert.equal(d.sample(3, 200), false);
+  assert.equal(d.sample(3, 400), false);
+  d.sample(1, 500);
+  assert.equal(d.sample(3, 600), false);
+  d.sample(1, 700);
+  assert.equal(d.sample(3, 800), true);
+  d.sample(1, 900);
+  assert.equal(d.sample(3, 1000), false);
+  assert.equal(d.sample(Number.NaN, 1100), false);
 });
