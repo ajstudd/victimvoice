@@ -1,10 +1,11 @@
 import { PrivateGate } from "./PrivateGate";
 import { CaseTeam } from "./CaseTeam";
-import React, { useCallback, useEffect, useState } from "react";
-import { View, Switch, Platform, Linking } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { View, Switch, Platform, Linking, AppState } from "react-native";
 import { router } from "expo-router";
 import { Page, T, Button, Row, Field, Notice, Badge, colors, s } from "./ui";
 import { useApp } from "../state/AppState";
+import { smsAccess, type SmsAccess } from "../lib/sms-permission";
 import { nativeSms, allowSms } from "../lib/native-sms";
 import {
   defaultSosPreferences,
@@ -29,14 +30,39 @@ function SosSetupContent() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [cap, setCap] = useState(() => nativeSms?.capabilities());
+  const [smsFeedback, setSmsFeedback] = useState<SmsAccess | null>(null);
+  const [smsError, setSmsError] = useState("");
+  const [requestingSms, setRequestingSms] = useState(false);
+  const smsInFlight = useRef(false);
+  useEffect(() => {
+    const listener = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      const current = nativeSms?.capabilities();
+      setCap(current);
+      setSmsFeedback((old) =>
+        current?.permission
+          ? smsAccess(current)
+          : old
+            ? smsAccess(
+                current || null,
+                old.state === "blocked" ? "never_ask_again" : undefined,
+              )
+            : null,
+      );
+    });
+    return () => listener.remove();
+  }, []);
+
   const [cloud, setCloud] = useState<{ relay: boolean; push: boolean } | null>(
     null,
   );
   async function check() {
     setBusy(true);
     try {
+      const current = nativeSms?.capabilities();
+      setCap(current);
+      setSmsFeedback(smsAccess(current || null));
       setCloud(await sosCapabilities());
-      setCap(nativeSms?.capabilities());
       setMessage("Availability checked. No message was sent.");
     } catch (e) {
       setMessage((e as Error).message);
@@ -47,7 +73,7 @@ function SosSetupContent() {
   return (
     <Page back title="Safety message setup">
       <Badge label="Your safety message" />
-      <T kind="title">Set up your{ "\n" }safety messages.</T>
+      <T kind="title">Set up your{"\n"}safety messages.</T>
       <T>
         After setup, the send action messages your selected contacts directly.
         No share sheet opens.
@@ -72,30 +98,72 @@ function SosSetupContent() {
       />
       <Row
         title="Phone SIM sending"
-        subtitle={
-          !nativeSms
-            ? "Install the latest phone app to send texts directly."
-            : cap?.permission
-              ? cap.defaultSim
-                ? "Permission allowed · Default SIM available"
-                : "Permission allowed · Set a default SMS SIM in device settings"
-              : "SMS permission is required. Your carrier plan applies."
-        }
+        subtitle={smsAccess(cap || null).message}
         icon="smartphone"
       />
       {Platform.OS === "android" && (
-        <Button
-          title="Allow SIM SMS"
-          tone="outline"
-          onPress={async () => {
-            try {
-              await allowSms();
-              setCap(nativeSms?.capabilities());
-            } catch (e) {
-              setMessage((e as Error).message);
-            }
-          }}
-        />
+        <View style={{ gap: 12 }}>
+          <Button
+            title={cap?.permission ? "Check SIM SMS access" : "Allow SIM SMS"}
+            tone="outline"
+            busy={requestingSms}
+            disabled={requestingSms}
+            onPress={async () => {
+              if (smsInFlight.current) return;
+              smsInFlight.current = true;
+              setRequestingSms(true);
+              setSmsError("");
+              try {
+                const result = await allowSms();
+                setCap(result.capabilities || undefined);
+                setSmsFeedback(result);
+              } catch (e) {
+                setSmsError(
+                  (e as Error).message ||
+                    "Could not request SMS access. Open app settings → Permissions → SMS, or use Backup SMS.",
+                );
+              } finally {
+                smsInFlight.current = false;
+                setRequestingSms(false);
+              }
+            }}
+          />
+          {requestingSms && (
+            <T kind="caption">
+              Waiting for Android’s permission response… No message will be
+              sent.
+            </T>
+          )}
+          {smsFeedback && (
+            <Notice
+              text={smsFeedback.message}
+              tone={
+                smsFeedback.state === "ready"
+                  ? "success"
+                  : smsFeedback.state === "choose_sim"
+                    ? "plain"
+                    : "error"
+              }
+            />
+          )}
+          {Boolean(smsError) && <Notice text={smsError} tone="error" />}
+          {(smsFeedback?.openSettings ||
+            (!cap?.permission && Boolean(cap?.supported)) ||
+            Boolean(smsError)) && (
+            <Button
+              title="Open app permission settings"
+              tone="outline"
+              icon="settings"
+              onPress={() =>
+                void Linking.openSettings().catch(() =>
+                  setSmsError(
+                    "Could not open settings. Open your phone settings → Apps → Victim Voice → Permissions → SMS.",
+                  ),
+                )
+              }
+            />
+          )}
+        </View>
       )}
       <Row
         title="Backup SMS"
@@ -121,7 +189,7 @@ function SosSetupContent() {
       ))}
       <Row
         title="Nearby emergency volunteers"
-        subtitle="Only approved responders who are available in your area can receive a request. Your precise location is shared after they accept."
+        subtitle="Only approved responders who are available in your area can receive a request. Your precise location is shared only after a supervisor assigns them."
         end={
           <Switch
             accessibilityLabel="Allow nearby responder offers"
