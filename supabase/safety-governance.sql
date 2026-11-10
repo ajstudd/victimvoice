@@ -403,7 +403,7 @@ begin
  if not owner_or_admin and not exists(select 1 from public.vv_sos_offers o join public.vv_sos_responders r on r.user_id=o.responder_id where o.event_id=p_id and o.responder_id=auth.uid() and public.vv_sos_can_respond(p_id,r.user_id)) then raise exception 'Incident unavailable';end if;
  if details and e.user_id<>auth.uid() and not exists(select 1 from public.vv_sos_audit where event_id=p_id and actor_id=auth.uid() and action='precise_context_viewed' and created_at>now()-interval '1 minute') then insert into public.vv_sos_audit(event_id,actor_id,action) values(p_id,auth.uid(),'precise_context_viewed');end if;
  return jsonb_build_object('id',e.id,'created_at',e.created_at,'status',e.status,'expires_at',e.expires_at,'region_id',e.region_id,'routing',e.routing,
-  'alias',case when details then e.alias end,'callback',case when details then e.callback end,
+  'alias',case when details then e.alias end,'callback',case when owner_or_admin then e.callback end,
   'latitude',case when details then extensions.st_y(e.position::extensions.geometry) end,'longitude',case when details then extensions.st_x(e.position::extensions.geometry) end,'accuracy',case when details then e.accuracy end,
   'recipients',case when owner_or_admin then (select coalesce(jsonb_agg(jsonb_build_object('id',contact_id,'name',name,'state',state)),'[]'::jsonb) from public.vv_sos_recipients where event_id=p_id) end,
   'accepted', (select count(*) from public.vv_sos_offers o join public.vv_sos_responders r on r.user_id=o.responder_id where event_id=p_id and accepted_at is not null and r.approved),

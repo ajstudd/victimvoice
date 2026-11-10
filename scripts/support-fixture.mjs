@@ -19,6 +19,18 @@ let messages=[
  {id:'30000000-0000-0000-0000-000000000022',request_id:first,sender:'user',content:'I have shared the messages. I would prefer to discuss things here for now.',created_at:stamp},
  {id:'30000000-0000-0000-0000-000000000021',request_id:first,sender:'admin',content:'I am here to listen. Would you like to tell me what would feel most helpful right now?',created_at:stamp},
 ];
+
+const emergencyRequests=[
+ {id:'40000000-0000-0000-0000-000000000001',created_at:stamp,status:'active',region_id:'bhopal',routing:'no_verified_route'},
+ {id:'40000000-0000-0000-0000-000000000002',created_at:stamp,status:'active',region_id:'tripura',routing:'no_on_duty_recipient'},
+ {id:'40000000-0000-0000-0000-000000000003',created_at:stamp,status:'resolved',region_id:'bhubaneswar',routing:'not_requested'}
+];
+const emergencyTeam=[
+ {user_id:'00000000-0000-0000-0000-000000000026',display_name:'Priya Mishra',region_id:'bhopal',approved:true,kind:'volunteer',agency_id:null,duty_until:new Date(Date.now()+900000).toISOString()},
+ {user_id:'00000000-0000-0000-0000-000000000027',display_name:'Neha Deb',region_id:'tripura',approved:false,kind:'volunteer',agency_id:null,duty_until:null}
+];
+let dispatchAccess=null;
+
 let accessAllowed=true;
 let notes=[{id:'note-1',author_name:'Maya · support',content:'Owner prefers written communication. Review the shared timeline, then discuss available next steps. Do not contact anyone externally without a clear request.',created_at:stamp}];
 const evidence=[{id:imageId,label:'Messages from 31 October',kind:'file',mime_type:'image/png',byte_size:png.length,sha256:createHash('sha256').update(png).digest('hex'),review_status:'under_review',created_at:stamp},{id:'20000000-0000-0000-0000-000000000022',label:'Public context link',kind:'link',mime_type:null,byte_size:0,sha256:null,review_status:'new',created_at:stamp}];
@@ -35,6 +47,7 @@ http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:54323');let body='';for await(const chunk of req)body+=chunk;
  let args={};try{args=JSON.parse(body||'{}');}catch{}
  const send=(value,status=200)=>{res.writeHead(status);res.end(JSON.stringify(value));};
+ if(url.pathname==='/functions/v1/sos'&&req.method==='GET'){send({relay:true,push:false});return;}
  if(url.pathname==='/auth/v1/token'){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureFactors=[];send(fixtureSession());return;}
  if(url.pathname==='/auth/v1/user'){send(fixtureUser());return;}
  if(url.pathname==='/auth/v1/logout'){send({});return;}
@@ -45,7 +58,16 @@ http.createServer(async(req,res)=>{
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.split('/').pop();
   const row=cases.find(c=>c.id===args.p_request_id)||cases[0];
-  if(name==='vv_worker_console'){send({workers:[{user_id:staff[0].user_id,display_name:'Maya Sharma',organisation:'Fictional support partner',requested_role:'support_volunteer',region:'bhopal',languages:'Hindi, English',skills:'Crisis listening and case documentation',status:'pending'},{user_id:'00000000-0000-0000-0000-000000000025',display_name:'Ananya Das',organisation:'Fictional outreach team',requested_role:'case_worker',region:'tripura',languages:'Bengali, English',skills:'Case support',status:'approved',review_due:stamp},{user_id:'00000000-0000-0000-0000-000000000026',display_name:'Priya Mishra',organisation:'Fictional community partner',requested_role:'emergency_responder',region:'bhubaneswar',languages:'Odia, Hindi',skills:'First aid',status:'probation',review_due:stamp}],invites:[],reports:[{id:'report-1',worker_id:staff[0].user_id,reason:'Fictional concern for visual review only.',state:'new'}],overdue_cases:[{request_id:first,user_id:staff[0].user_id}],overdue_sos:[],access_review:[]});return;}
+  if(name==='vv_sos_role'){send('admin');return;}
+  if(name==='vv_sos_list'){send(emergencyRequests);return;}
+  if(name==='vv_sos_team'){send(emergencyTeam);return;}
+  if(name==='vv_sos_areas'){send({regions:[{id:'bhopal',name:'Bhopal',scope:'City / commissionerate',source_url:'https://bhopal.mppolice.gov.in/contact/',geometry:null,volunteer_enabled:false},{id:'tripura',name:'Tripura',scope:'Entire state · district-by-district onboarding',source_url:'https://tripura.gov.in/',geometry:null,volunteer_enabled:false},{id:'bhubaneswar',name:'Bhubaneswar',scope:'Bhubaneswar Urban Police District',source_url:'https://bhubaneswarcuttackpolice.gov.in/know-your-police-station/',geometry:null,volunteer_enabled:false}],agencies:[]});return;}
+  if(name==='vv_sos_read'){const r=emergencyRequests.find(x=>x.id===args.p_id);if(!r){send({message:'Incident unavailable'},403);return;}send({...r,expires_at:new Date(Date.now()+1800000).toISOString(),alias:'Fictional safety request',callback:null,latitude:23.25,longitude:77.4,accuracy:20,details_allowed:true,recipients:[{id:'fixture-contact',name:'Fictional trusted contact',state:'relay_accepted'}],accepted:1,offers:1});return;}
+  if(name==='vv_dispatch_team'){send([{user_id:emergencyTeam[0].user_id,display_name:emergencyTeam[0].display_name,organisation:'Fictional community partner',accepted_at:stamp,access_until:dispatchAccess}]);return;}
+  if(name==='vv_dispatch_responder'){dispatchAccess=args.p_allow?new Date(Date.now()+900000).toISOString():null;send(null);return;}
+  if(name==='vv_sos_close'){const r=emergencyRequests.find(x=>x.id===args.p_id);if(r)r.status=args.p_status;send(null);return;}
+  if(name==='vv_create_worker_invite'){send('50000000-0000-0000-0000-000000000001');return;}
+  if(name==='vv_worker_console'){send({workers:[{user_id:staff[0].user_id,display_name:'Maya Sharma',organisation:'Fictional support partner',requested_role:'support_volunteer',region:'bhopal',languages:'Hindi, English',skills:'Crisis listening and case documentation',status:'pending'},{user_id:'00000000-0000-0000-0000-000000000025',display_name:'Ananya Das',organisation:'Fictional outreach team',requested_role:'case_worker',region:'tripura',languages:'Bengali, English',skills:'Case support',status:'approved',review_due:stamp},{user_id:'00000000-0000-0000-0000-000000000026',display_name:'Priya Mishra',organisation:'Fictional community partner',requested_role:'emergency_responder',region:'bhubaneswar',languages:'Odia, Hindi',skills:'First aid',status:'probation',review_due:new Date(Date.now()+86400000).toISOString(),identity_checked:true,reference_checked:true,interview_checked:true,training_checked:true,confidentiality_checked:true}],invites:[],reports:[{id:'report-1',worker_id:staff[0].user_id,reason:'Fictional concern for visual review only.',state:'new'}],overdue_cases:[{request_id:first,user_id:staff[0].user_id}],overdue_sos:[],access_review:[]});return;}
   if(name==='vv_my_assignments'){send([]);return;}
   if(name==='vv_evidence_permissions'){send([]);return;}
   if(name==='vv_can_work_case'){send(accessAllowed);return;}

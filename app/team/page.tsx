@@ -29,6 +29,13 @@ import {
 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { supportRpc } from "@/lib/support";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { StaffMfa } from "@/components/staff-mfa";
 import { PILOT_REGIONS } from "@/shared/sos";
 type Worker = {
@@ -360,6 +367,55 @@ function TeamConsole({ admin }: { admin: boolean }) {
   );
   return (
     <>
+      <Dialog
+        open={Boolean(invite)}
+        onOpenChange={(open) => {
+          if (!open) setInvite("");
+        }}
+      >
+        <DialogContent className="tm-invite-dialog">
+          <DialogHeader>
+            <span className="tm-section-icon">
+              <MailPlus size={24} />
+            </span>
+            <DialogTitle>Invitation code ready</DialogTitle>
+            <DialogDescription>
+              Copy this code and send it privately to the person you invited.
+              They’ll enter it on the team joining page.
+            </DialogDescription>
+          </DialogHeader>
+          <code className="tm-invite-code">{invite}</code>
+          <button
+            className="tm-button tm-full"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(invite);
+                setCopied(true);
+              } catch {
+                setError(
+                  "Could not copy. Select the invitation code and copy it manually.",
+                );
+              }
+            }}
+          >
+            {copied ? <Check size={17} /> : <Copy size={17} />}{" "}
+            {copied ? "Code copied" : "Copy invitation code"}
+          </button>
+          {error && (
+            <p className="tm-alert" role="alert">
+              {error}
+            </p>
+          )}
+          <p className="tm-invite-explainer">
+            No email or SMS has been sent. This code is only shown now—copy it
+            before closing. It works once, for the account you invited, within
+            seven days.
+          </p>
+          <button className="tm-text-button" onClick={() => setInvite("")}>
+            Done
+          </button>
+        </DialogContent>
+      </Dialog>
       <div className="tm-page-heading">
         <div>
           <span className="tm-eyebrow">PEOPLE & PERMISSIONS</span>
@@ -627,55 +683,13 @@ function TeamConsole({ admin }: { admin: boolean }) {
                         ) : (
                           <Plus size={17} />
                         )}
-                        Create invitation
+                        Create invitation code
                       </button>
                       <p className="tm-form-note">
                         <Clock3 size={14} />
                         Valid for seven days. One use, by this account only.
                       </p>
                     </form>
-                    {invite && (
-                      <div className="tm-invite-result" role="status">
-                        <CheckCircle2 size={20} />
-                        <div>
-                          <strong>Invitation ready</strong>
-                          <p>
-                            Share this code privately with the person you
-                            invited.
-                          </p>
-                          <code>{invite}</code>
-                          <div className="tm-actions">
-                            <button
-                              className="tm-text-button"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(invite);
-                                  setCopied(true);
-                                } catch {
-                                  setError(
-                                    "Select the invitation code to copy it manually.",
-                                  );
-                                }
-                              }}
-                            >
-                              {copied ? (
-                                <Check size={15} />
-                              ) : (
-                                <Copy size={15} />
-                              )}{" "}
-                              {copied ? "Copied" : "Copy code"}
-                            </button>
-                            <button
-                              className="tm-text-button"
-                              onClick={() => setInvite("")}
-                            >
-                              <X size={14} />
-                              Hide code
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </section>
                   <section className="tm-panel">
                     <div className="tm-panel-heading">

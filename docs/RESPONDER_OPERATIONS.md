@@ -1,5 +1,7 @@
 # Supervised support and emergency response
 
+**Revised owner direction, 10 November 2026:** `SCOPED_WORKFORCE_MODEL.md` now defines the target hierarchy: database-controlled superadmin → scoped admins → employees → public app volunteer applications. It supersedes invitation-only volunteer enrollment as the target product direction. The current deployed role model remains the earlier implementation until that scoped architecture is built and verified.
+
 Accepted product direction: 10 November 2026. Begin with known staff and invited partner organisations in Bhopal, Tripura and Bhubaneswar. An app account or application is never a responder credential.
 
 ## Access and enrollment

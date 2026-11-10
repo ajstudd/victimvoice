@@ -78,7 +78,8 @@ select public.vv_sos_approve('00000000-0000-0000-0000-000000000004',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',true);
 select public.vv_sos_duty(true,23.251,77.401);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
-select public.vv_sos_start('30000000-0000-0000-0000-000000000001','Fictional owner','[{"id":"40000000-0000-0000-0000-000000000001","name":"Fictional contact","phone":"+919999999991"}]','bhopal',false,true,false,jsonb_build_object('latitude',23.25,'longitude',77.4,'timestamp',extract(epoch from now())*1000,'accuracy',20));
+select public.vv_sos_start('30000000-0000-0000-0000-000000000001','Fictional owner','[{"id":"40000000-0000-0000-0000-000000000001","name":"Fictional contact","phone":"+919999999991"}]','bhopal',false,true,false,jsonb_build_object('latitude',23.25,'longitude',77.4,'timestamp',extract(epoch from now())*1000,'accuracy',20),'+919999999990');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000001')->>'callback'='+919999999990','Owner retains their chosen callback');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',true);
 select public.vv_sos_accept('30000000-0000-0000-0000-000000000001');
 select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000001')->>'latitude' is null,'Self-acceptance cannot disclose coordinates');
@@ -87,6 +88,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002'
 select public.vv_dispatch_responder('30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000004',true);
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',true);
 select public.qa_assert((public.vv_sos_read('30000000-0000-0000-0000-000000000001')->>'latitude')::numeric=23.25,'Explicit dispatched assignment releases location');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000001')->>'callback' is null,'Dispatched volunteer cannot obtain the callback number');
 -- Survivor report revokes and hides report text from the accused.
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
 select public.vv_report_worker('00000000-0000-0000-0000-000000000004','Fictional report for local test',null,'30000000-0000-0000-0000-000000000001');
