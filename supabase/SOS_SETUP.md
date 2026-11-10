@@ -1,5 +1,7 @@
 # SOS pilot setup — Bhopal, Tripura and Bhubaneswar
 
+**10 November 2026 update:** after the base schemas and `journey-sharing.sql`, apply `safety-governance.sql`. Use `/team` for account-bound invitations, recorded reviews and MFA. Support and emergency approvals are distinct. An emergency acknowledgement does not release location: an MFA supervisor must issue a short-lived dispatch assignment. These requirements supersede the acceptance-only flow below. Firebase is not yet set up, and responder push remains disabled. See `docs/RESPONDER_OPERATIONS.md` for launch gates.
+
 Software setup does not establish police or volunteer operational coverage. No real alert was sent during development.
 
 Status on 4 November 2026: additive schema applied and verified in `pkjnhdrookwdbaavsjks`; both Edge Functions deployed; worker secret stored in Edge Secrets/Vault; minute outbox and hourly retention jobs active. Hosted anonymous/private and worker grants verified. The user added the three Twilio secrets; their presence was checked and `VV_ENABLE_SMS_RELAY=true` was set. Hosted capabilities now report `relay:true, push:false`. Configuration formats passed the endpoint checks; Twilio authentication, sender routing and real delivery are not yet tested. No queued SMS existed when enabling. Responder push remains disabled pending Firebase/Expo setup. All three region boundaries remain unreviewed; no agency or approved emergency responder is onboarded.

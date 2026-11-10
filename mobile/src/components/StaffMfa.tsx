@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { T, Button, Field, Notice } from "./ui";
+import { Page, T, Button, Field, Notice } from "./ui";
 import { supabase } from "../lib/supabase";
 import { useApp } from "../state/AppState";
 export function StaffMfa({ children }: { children: React.ReactNode }) {
@@ -38,7 +38,7 @@ function MfaSession({ children }: { children: React.ReactNode }) {
   }, [accessToken]);
   if (!session || (allowed && allowed === accessToken)) return <>{children}</>;
   return (
-    <>
+    <Page back title="Responder security">
       <T kind="heading">Protect your responder account</T>
       <T>
         Use an authenticator code before accessing emergency requests. This
@@ -118,6 +118,6 @@ function MfaSession({ children }: { children: React.ReactNode }) {
         </>
       )}
       {Boolean(error) && <Notice text={error} tone="error" />}
-    </>
+    </Page>
   );
 }
