@@ -1,4 +1,5 @@
 "use client";
+import { CaseTeam } from "./case-team";
 import { useEffect, useState } from "react";
 import { getCase, supportError, supportRpc } from "@/lib/support";
 export function SupportConsent({ requestId }: { requestId: string }) {
@@ -29,8 +30,8 @@ export function SupportConsent({ requestId }: { requestId: string }) {
         <span>
           <strong>Let trained volunteers help</strong>
           {allowed
-            ? "On. Supervisors and a volunteer they assign can read this conversation and its files."
-            : "Off. Only supervisors can read this conversation and its files."}
+            ? "On. Reviewed volunteers can join your assigned conversation. Evidence access is a separate choice."
+            : "Off. Supervisors and assigned employed case workers can help. Volunteer access is off."}
         </span>
         <input
           type="checkbox"
@@ -60,6 +61,7 @@ export function SupportConsent({ requestId }: { requestId: string }) {
         Volunteers never see your email or phone. Turning this off removes their
         access straight away.
       </p>
+      <CaseTeam requestId={requestId} />
       {error && (
         <p role="alert" className="vv-error">
           {error}

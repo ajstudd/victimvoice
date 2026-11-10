@@ -50,3 +50,5 @@ supabase/.temp/
 .env
 .env.*
 !.env.example
+
+/.next-governance-qa/

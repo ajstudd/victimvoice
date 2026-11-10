@@ -1,4 +1,5 @@
 import { PrivateGate } from "./PrivateGate";
+import { CaseTeam } from "./CaseTeam";
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Switch, Platform, Linking } from "react-native";
 import { router } from "expo-router";
@@ -315,7 +316,7 @@ export function ActiveSos() {
               <T kind="heading">Nearby response</T>
               <T>
                 {cloud
-                  ? `${cloud.offers} offers · ${cloud.accepted} accepted`
+                  ? `${cloud.offers} offers · ${cloud.accepted} acknowledged`
                   : "Checking nearby help status…"}
               </T>
               <T>
@@ -328,6 +329,7 @@ export function ActiveSos() {
               </T>
             </View>
           )}
+          {event.cloudCreated && <CaseTeam eventId={event.id} />}
           {event.closePending && (
             <Notice text="Closed on this device. Server cancellation is queued and has not yet been confirmed." />
           )}

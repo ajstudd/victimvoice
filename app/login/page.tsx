@@ -29,7 +29,9 @@ export default function LoginPage() {
       if (sentTo) {
         const { error } = await supabase.auth.verifyOtp({ phone: sentTo, token: code.trim(), type: 'sms' });
         if (error) throw error;
-        router.replace('/dashboard');
+        const team = sessionStorage.getItem('vv-login-destination') === '/team';
+        sessionStorage.removeItem('vv-login-destination');
+        router.replace(team ? '/team' : '/dashboard');
       } else {
         const normalized = phone.replace(/[\s()-]/g, '');
         if (!/^\+[1-9]\d{7,14}$/.test(normalized)) throw new Error('Enter a full phone number with country code, such as +91 98765 43210.');

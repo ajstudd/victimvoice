@@ -25,6 +25,7 @@ import { supabase, cloudError, accountClient } from "../lib/supabase";
 import { PrivateGate } from "./PrivateGate";
 import { useConversationSync } from "../hooks/useConversationSync";
 import { insertSupportRequest } from "../lib/cloud-writes";
+import { CaseTeam } from "./CaseTeam";
 import { CaseEvidence } from "./CaseEvidence";
 import {
   TOPICS,
@@ -809,8 +810,8 @@ function RequestContent({ id }: { id?: string }) {
                 title="Let trained volunteers help"
                 subtitle={
                   record.allow_volunteer_support
-                    ? "On. Supervisors and a volunteer they assign can read this conversation and its files."
-                    : "Off. Only supervisors can read this conversation and its files."
+                    ? "On. Reviewed volunteers may join your assigned conversation. You choose their evidence access separately."
+                    : "Off. Supervisors and assigned employed case workers can help. Volunteer access is off."
                 }
                 end={
                   <Switch
@@ -868,6 +869,7 @@ function RequestContent({ id }: { id?: string }) {
                   </View>
                 ))}
               </View>
+              <CaseTeam requestId={id} />
               <HelpNowLink />
             </>
           )}

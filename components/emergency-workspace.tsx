@@ -1,4 +1,5 @@
 "use client";
+import { StaffMfa } from "@/components/staff-mfa";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -29,6 +30,13 @@ type Area = {
   volunteer_enabled?: boolean;
   geometry?: { type: string; coordinates: number[][][][] };
 };
+type DispatchMember = {
+  user_id: string;
+  display_name: string;
+  organisation: string;
+  accepted_at: string | null;
+  access_until: string | null;
+};
 type RecordView = Incident & {
   alias: string | null;
   callback: string | null;
@@ -50,7 +58,11 @@ export function EmergencyWorkspace() {
     );
     return () => data.subscription.unsubscribe();
   }, []);
-  return <Session key={scope} />;
+  return (
+    <StaffMfa key={scope}>
+      <Session />
+    </StaffMfa>
+  );
 }
 function Session() {
   const [role, setRole] = useState<string | null>(null);
@@ -60,6 +72,7 @@ function Session() {
     regions: [],
     agencies: [],
   });
+  const [dispatchTeam, setDispatchTeam] = useState<DispatchMember[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [record, setRecord] = useState<RecordView | null>(null);
   const [error, setError] = useState("");
@@ -119,7 +132,22 @@ function Session() {
         if (r.error) throw r.error;
         detail = r.data;
       }
-      return { role, rows: list.data as Incident[], members, map, detail };
+      let dispatch: DispatchMember[] = [];
+      if (selected && role === "admin") {
+        const r = await client
+          .rpc("vv_dispatch_team", { p_event: selected })
+          .abortSignal(signal);
+        if (r.error) throw r.error;
+        dispatch = r.data;
+      }
+      return {
+        role,
+        rows: list.data as Incident[],
+        members,
+        map,
+        detail,
+        dispatch,
+      };
     },
     [selected],
   );
@@ -130,23 +158,27 @@ function Session() {
       members: Team[];
       map: typeof areas;
       detail: RecordView | null;
+      dispatch: DispatchMember[];
     }) => {
       setRole(r.role);
       setIncidents(r.rows);
       setTeam(r.members);
       setAreas(r.map);
       setRecord(r.detail);
+      setDispatchTeam(r.dispatch);
       setError("");
     },
     [],
   );
   const failed = useCallback((e: unknown) => {
     setRecord(null);
+    setDispatchTeam([]);
     setError((e as Error).message);
   }, []);
   const changed = useCallback(() => {
     setRecord(null);
     setIncidents([]);
+    setDispatchTeam([]);
     setTeam([]);
     setAreas({ regions: [], agencies: [] });
     setRole(null);
@@ -187,11 +219,12 @@ function Session() {
         <div>
           <p>Victim Voice · Emergency response</p>
           <h1 style={{ fontSize: 30, fontFamily: "Georgia" }}>
-            Live incidents & pilot coverage
+            Emergency desk & service areas
           </h1>
         </div>
         <nav>
-          <Link href="/admin/dashboard">Support inbox</Link>
+          <Link href="/admin/dashboard">Support inbox</Link> ·{" "}
+          <Link href="/team">Team enrollment</Link>
           {" · "}
           <Link href="/admin/login">Sign in</Link>
           {" · "}
@@ -257,7 +290,8 @@ function Session() {
               {record ? (
                 <>
                   <p>
-                    {record.alias || "Approximate area only until acceptance"}
+                    {record.alias ||
+                      "Service area only until supervisor assignment"}
                   </p>
                   <p>
                     {record.status} · {record.region_id}
@@ -269,13 +303,64 @@ function Session() {
                     </p>
                   )}
                   <p>
-                    {record.offers} offers · {record.accepted} accepted
+                    {record.offers} offers · {record.accepted} acknowledged
                   </p>
                   {record.recipients?.map((r) => (
                     <p key={r.id}>
                       {r.name}: {r.state}
                     </p>
                   ))}
+                  {role === "admin" && (
+                    <section>
+                      <h3>Assign precise-location access</h3>
+                      <p>
+                        Only assign a responder after confirming responsibility
+                        and availability. Access lasts up to 15 minutes and ends
+                        sooner if duty or the incident expires.
+                      </p>
+                      {dispatchTeam.map((p) => (
+                        <article key={p.user_id}>
+                          <strong>{p.display_name}</strong>
+                          <p>
+                            {p.organisation} ·{" "}
+                            {p.accepted_at
+                              ? "Acknowledged availability"
+                              : "Awaiting acknowledgement"}
+                          </p>
+                          <p>
+                            {p.access_until
+                              ? `Access expires ${new Date(p.access_until).toLocaleTimeString()}`
+                              : "No location assignment"}
+                          </p>
+                          <button
+                            disabled={busy || !p.accepted_at}
+                            onClick={() =>
+                              run("vv_dispatch_responder", {
+                                p_event: record.id,
+                                p_worker: p.user_id,
+                                p_allow: true,
+                              })
+                            }
+                          >
+                            Assign location access
+                          </button>
+                          {" · "}
+                          <button
+                            disabled={busy}
+                            onClick={() =>
+                              run("vv_dispatch_responder", {
+                                p_event: record.id,
+                                p_worker: p.user_id,
+                                p_allow: false,
+                              })
+                            }
+                          >
+                            Revoke location access
+                          </button>
+                        </article>
+                      ))}
+                    </section>
+                  )}
                   {role === "admin" ? (
                     <button
                       disabled={busy}
@@ -293,7 +378,7 @@ function Session() {
                       disabled={busy}
                       onClick={() => run("vv_sos_accept", { p_id: record.id })}
                     >
-                      Accept current offer
+                      Acknowledge availability
                     </button>
                   )}
                   <p>
@@ -356,7 +441,8 @@ function Session() {
                         p_source: source,
                         p_enabled: enabled,
                         p_name: kind === "agency" ? name : null,
-                        p_agency: kind === "agency" ? editingAgency || null : null,
+                        p_agency:
+                          kind === "agency" ? editingAgency || null : null,
                       });
                     } catch (e) {
                       setError((e as Error).message);
@@ -392,18 +478,27 @@ function Session() {
                   {kind === "agency" && (
                     <label>
                       Receiving area
-                      <select value={editingAgency} onChange={(e) => {
-                        const id = e.target.value;
-                        setEditingAgency(id);
-                        const a = areas.agencies.find((a) => a.id === id);
-                        setName(a?.name || "");
-                        setSource(a?.source_url || "");
-                        setGeometry(a?.geometry ? JSON.stringify(a.geometry) : "");
-                        setEnabled(Boolean(a?.enabled));
-                        if (a?.region_id) setRegion(a.region_id);
-                      }}>
+                      <select
+                        value={editingAgency}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setEditingAgency(id);
+                          const a = areas.agencies.find((a) => a.id === id);
+                          setName(a?.name || "");
+                          setSource(a?.source_url || "");
+                          setGeometry(
+                            a?.geometry ? JSON.stringify(a.geometry) : "",
+                          );
+                          setEnabled(Boolean(a?.enabled));
+                          if (a?.region_id) setRegion(a.region_id);
+                        }}
+                      >
                         <option value="">Create receiving area</option>
-                        {areas.agencies.map((a) => <option key={a.id} value={a.id}>{a.name} · {a.region_id}</option>)}
+                        {areas.agencies.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name} · {a.region_id}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   )}
@@ -579,7 +674,9 @@ function AreaMap({ areas }: { areas: Area[] }) {
         {polygons.map((polygon, i) => (
           <path
             key={i}
-            d={polygon.map((ring) => "M" + ring.map(map).join("L") + "Z").join(" ")}
+            d={polygon
+              .map((ring) => "M" + ring.map(map).join("L") + "Z")
+              .join(" ")}
             fillRule="evenodd"
             fill="#2C6D5D33"
             stroke="#2C6D5D"

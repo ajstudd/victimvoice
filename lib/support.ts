@@ -1,6 +1,6 @@
 import { getSupabase } from "./supabase";
 import type { EvidenceItem } from "@/shared/evidence";
-export type StaffRole = "admin" | "volunteer" | "none";
+export type StaffRole = "admin" | "volunteer" | "case_worker" | "none";
 export type CaseSummary = {
   id: string;
   description: string;
@@ -17,6 +17,11 @@ export type StaffMember = {
   user_id: string;
   display_name: string;
   enabled?: boolean;
+  role?: string;
+  organisation?: string;
+  languages?: string;
+  skills?: string;
+  available_until?: string;
 };
 export type CaseActivity = {
   id: string;
@@ -34,7 +39,7 @@ export function supportError(error: unknown) {
       value.message || "",
     )
   )
-    return "The support workspace needs its Supabase setup script. Existing support messages are still saved.";
+    return "Support is unavailable right now. Your messages are still saved.";
   return (
     value.message || "The action could not be completed. Please try again."
   );

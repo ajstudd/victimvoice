@@ -1,26 +1,27 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { View, Linking } from "react-native";
 import { router } from "expo-router";
-import { Page, T, Button, Row, Field, Notice, Badge, s } from "./ui";
+import { Page, T, Button, Row, Notice, Badge, s } from "./ui";
+import { StaffMfa } from "./StaffMfa";
 import { PrivateGate } from "./PrivateGate";
 import { useApp } from "../state/AppState";
 import { accountClient } from "../lib/supabase";
 import { currentLocation } from "../lib/actions";
 import { registerResponderPush } from "../lib/push";
 import { useConversationSync } from "../hooks/useConversationSync";
-import { PILOT_REGIONS, isUuid } from "../../../shared/sos";
+import { isUuid } from "../../../shared/sos";
 import type { SosRecord } from "../lib/sos-client";
 export function Responder() {
   return (
     <PrivateGate>
-      <ResponderContent />
+      <StaffMfa>
+        <ResponderContent />
+      </StaffMfa>
     </PrivateGate>
   );
 }
 function ResponderContent() {
   const { session, save } = useApp();
-  const [name, setName] = useState("");
-  const [region, setRegion] = useState("bhopal");
   const [profile, setProfile] = useState<{
     approved: boolean;
     display_name: string;
@@ -88,35 +89,16 @@ function ResponderContent() {
           {!profile ? (
             <>
               <T>
-                Apply to help people in your area. Submitting an
-                application does not grant incident or location access.
+                Emergency responders join by invitation from a partner
+                supervisor. Complete your application and training before
+                responding to requests.
               </T>
-              <Field
-                label="Responder display name"
-                value={name}
-                onChangeText={setName}
-                maxLength={80}
-              />
-              {PILOT_REGIONS.map((r) => (
-                <Row
-                  key={r.id}
-                  title={r.name}
-                  icon={r.id === region ? "check-circle" : "circle"}
-                  onPress={() => setRegion(r.id)}
-                />
-              ))}
               <Button
-                title="Apply as a volunteer"
-                busy={busy}
-                disabled={!name.trim()}
+                title="Open team enrollment"
                 onPress={() =>
-                  run(async () => {
-                    const r = await accountClient(session).rpc("vv_sos_apply", {
-                      p_region: region,
-                      p_name: name.trim(),
-                    });
-                    if (r.error) throw r.error;
-                  }, "Application submitted for review.")
+                  void Linking.openURL(
+                    "https://victimvoice.vercel.app/team",
+                  ).catch(() => setMessage("Could not open team enrollment."))
                 }
               />
             </>
@@ -211,7 +193,9 @@ function ResponderContent() {
 export function ResponderCase({ id }: { id?: string }) {
   return (
     <PrivateGate>
-      <CaseContent id={id} />
+      <StaffMfa>
+        <CaseContent id={id} />
+      </StaffMfa>
     </PrivateGate>
   );
 }
@@ -254,11 +238,11 @@ function CaseContent({ id }: { id?: string }) {
           {!record.details_allowed ? (
             <>
               <T>
-                Only the service area is available before acceptance. Do not
-                respond unless you are available and authorized for this role.
+                Your acknowledgement tells the supervisor you are available.
+                Precise location stays private until a supervisor assigns you.
               </T>
               <Button
-                title="Accept this request"
+                title="I’m available · Acknowledge"
                 busy={busy}
                 onPress={async () => {
                   if (!session || busy) return;

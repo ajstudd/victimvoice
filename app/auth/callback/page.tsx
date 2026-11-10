@@ -27,7 +27,9 @@ export default function AuthCallback() {
           throw new Error(
             "We could not finish sign-in. Please try again in the browser where you started.",
           );
-        const destination = admin ? await staffLanding() : "/dashboard";
+        const team = sessionStorage.getItem("vv-login-destination") === "/team";
+        sessionStorage.removeItem("vv-login-destination");
+        const destination = admin ? await staffLanding() : team ? "/team" : "/dashboard";
         if (!destination)
           throw new Error(
             "This account has not been approved for staff access. You can still sign in to request support.",

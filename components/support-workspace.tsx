@@ -1,4 +1,5 @@
 "use client";
+import { StaffMfa } from "@/components/staff-mfa";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -56,13 +57,44 @@ export function SupportWorkspace() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  return <Suspense fallback={<main className="support-app">Loading support workspace…</main>}><WorkspaceSession key={scope} /></Suspense>;
+  return (
+    <Suspense
+      fallback={<main className="support-app">Loading support workspace…</main>}
+    >
+      <StaffMfa key={scope}>
+        <WorkspaceSession />
+      </StaffMfa>
+    </Suspense>
+  );
 }
 function WorkspaceSession() {
   const allowed = useAdminAuth();
+  useEffect(() => {
+    if (!allowed) return;
+    let live = true;
+    const load = async () => {
+      try {
+        const rows =
+          await supportRpc<{ accepted_at: string | null }[]>(
+            "vv_my_assignments",
+          );
+        if (live)
+          setPendingAssignments(rows.filter((r) => !r.accepted_at).length);
+      } catch {
+        if (live) setPendingAssignments(0);
+      }
+    };
+    void load();
+    const t = setInterval(() => void load(), 15000);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [allowed]);
   const params = useSearchParams();
   const router = useRouter();
   const selectedId = params.get("id");
+  const [pendingAssignments, setPendingAssignments] = useState(0);
   const [role, setRole] = useState<StaffRole>("none");
   const [identity, setIdentity] = useState("Support session");
   const [rows, setRows] = useState<CaseSummary[]>([]);
@@ -103,7 +135,7 @@ function WorkspaceSession() {
         if (!active) return;
         setRole(value);
         setIdentity(
-          `${value === "admin" ? "Supervisor" : "Volunteer"} · ${user.data.user?.id.slice(0, 8) || "session"}`,
+          `${value === "admin" ? "Supervisor" : "Support worker"} · ${user.data.user?.id.slice(0, 8) || "session"}`,
         );
         if (value === "admin") {
           const people = await getStaff();
@@ -196,9 +228,15 @@ function WorkspaceSession() {
           <div className="support-inbox-heading">
             <div>
               <p className="support-eyebrow">
-                {role === "volunteer" ? "Assigned to you" : "Case queue"}
+                {role !== "admin" ? "Assigned to you" : "Case queue"}
               </p>
               <h1>Support inbox</h1>
+              <Link href="/team">
+                Team & assignments{" "}
+                {pendingAssignments > 0
+                  ? `· ${pendingAssignments} to acknowledge`
+                  : ""}
+              </Link>
             </div>
             <button
               className="support-icon-button"
@@ -287,8 +325,8 @@ function WorkspaceSession() {
                 <Inbox />
                 <p>No cases here yet.</p>
                 <span>
-                  {role === "volunteer"
-                    ? "A supervisor can assign a case after its owner consents."
+                  {role !== "admin"
+                    ? "Acknowledge new assignments in Team & assignments before opening the conversation."
                     : "New support requests will appear in this queue."}
                 </span>
               </div>
@@ -557,25 +595,33 @@ function CaseWorkspace({
             {role === "admin" && (
               <>
                 <label>
-                  Approved volunteer
+                  Reviewed support worker
                   <select
                     value={assignee}
-                    disabled={!row.allow_volunteer_support || busy}
+                    disabled={busy}
                     onChange={(e) => setAssignee(e.target.value)}
                   >
                     <option value="">Choose a team member</option>
                     {staff
-                      .filter((p) => p.enabled)
+                      .filter(
+                        (p) =>
+                          p.enabled &&
+                          (p.role === "case_worker" ||
+                            row.allow_volunteer_support) &&
+                          p.available_until &&
+                          Date.parse(p.available_until) > Date.now(),
+                      )
                       .map((p) => (
                         <option key={p.user_id} value={p.user_id}>
-                          {p.display_name}
+                          {p.display_name} · {p.role?.replaceAll("_", " ")} ·{" "}
+                          {p.languages}
                         </option>
                       ))}
                   </select>
                 </label>
                 <button
                   className="support-secondary-button"
-                  disabled={!assignee || !row.allow_volunteer_support || busy}
+                  disabled={!assignee || busy}
                   onClick={() =>
                     mutate("vv_assign_case", {
                       p_user_id: assignee,
@@ -597,7 +643,8 @@ function CaseWorkspace({
                       })
                     }
                   >
-                    Remove {p.display_name}
+                    Remove {p.display_name} · {p.role?.replaceAll("_", " ")} ·{" "}
+                    {p.languages}
                   </button>
                 ))}
               </>
@@ -665,7 +712,7 @@ function CaseWorkspace({
                 <span className="support-avatar">{person.display_name[0]}</span>
                 <span>
                   {person.display_name}
-                  <small>Approved volunteer</small>
+                  <small>Reviewed support worker</small>
                 </span>
                 {role === "admin" && (
                   <button
@@ -695,10 +742,10 @@ function CaseWorkspace({
           {role === "admin" && (
             <>
               <label>
-                Assign an approved volunteer
+                Assign a reviewed worker
                 <select
                   value={assignee}
-                  disabled={!row.allow_volunteer_support || busy}
+                  disabled={busy}
                   onChange={(e) => setAssignee(e.target.value)}
                 >
                   <option value="">Choose a team member</option>
@@ -706,18 +753,23 @@ function CaseWorkspace({
                     .filter(
                       (p) =>
                         p.enabled &&
+                        (p.role === "case_worker" ||
+                          row.allow_volunteer_support) &&
+                        p.available_until &&
+                        Date.parse(p.available_until) > Date.now() &&
                         !row.team?.some((a) => a.user_id === p.user_id),
                     )
                     .map((p) => (
                       <option key={p.user_id} value={p.user_id}>
-                        {p.display_name}
+                        {p.display_name} · {p.role?.replaceAll("_", " ")} ·{" "}
+                        {p.languages}
                       </option>
                     ))}
                 </select>
               </label>
               <button
                 className="support-secondary-button"
-                disabled={!assignee || !row.allow_volunteer_support || busy}
+                disabled={!assignee || busy}
                 onClick={() =>
                   mutate("vv_assign_case", {
                     p_user_id: assignee,
@@ -887,104 +939,12 @@ function CaseActivityPanel({
     </section>
   );
 }
-function TeamPanel({
-  staff,
-  onChanged,
-}: {
-  staff: StaffMember[];
-  onChanged: () => void;
-}) {
-  const [uid, setUid] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function save(user: string, displayName: string, enabled: boolean) {
-    setBusy(true);
-    setError("");
-    try {
-      await supportRpc("vv_set_volunteer", {
-        p_user_id: user,
-        p_display_name: displayName,
-        p_enabled: enabled,
-      });
-      setUid("");
-      setName("");
-      onChanged();
-    } catch (e) {
-      setError(supportError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
+function TeamPanel(_props: { staff: StaffMember[]; onChanged: () => void }) {
   return (
     <section className="support-team-panel">
-      <p className="support-eyebrow">Supervisor controls</p>
-      <h2>A team you can account for.</h2>
-      <p>
-        Approve a volunteer only after identity checks and training outside this
-        prototype. Approval alone grants no case access; assignment and survivor
-        consent are also required.
-      </p>
-      {error && (
-        <p className="support-error" role="alert">
-          {error}
-        </p>
-      )}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save(uid, name, true);
-        }}
-      >
-        <label>
-          Existing account’s Supabase User UID
-          <input
-            required
-            value={uid}
-            onChange={(e) => setUid(e.target.value)}
-            placeholder="Their account must already exist"
-            pattern="[0-9a-fA-F-]{36}"
-          />
-        </label>
-        <label>
-          Support display name
-          <input
-            value={name}
-            required
-            minLength={2}
-            maxLength={80}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name shown to survivors"
-          />
-        </label>
-        <button className="support-primary-button" disabled={busy}>
-          Approve support access <ArrowUpRight size={16} />
-        </button>
-      </form>
-      <div className="support-team-directory">
-        {staff.map((person) => (
-          <article key={person.user_id}>
-            <span className="support-avatar">{person.display_name[0]}</span>
-            <div>
-              <strong>{person.display_name}</strong>
-              <small>
-                {person.enabled
-                  ? "Approved · case assignment required"
-                  : "Access suspended"}
-              </small>
-            </div>
-            <button
-              className="support-secondary-button"
-              disabled={busy}
-              onClick={() =>
-                save(person.user_id, person.display_name, !person.enabled)
-              }
-            >
-              {person.enabled ? "Suspend access" : "Re-enable"}
-            </button>
-          </article>
-        ))}
-      </div>
+      <h2>Team enrollment</h2>
+      <p>Invite, review and supervise workers before assigning cases.</p>
+      <Link href="/team">Open team controls</Link>
     </section>
   );
 }

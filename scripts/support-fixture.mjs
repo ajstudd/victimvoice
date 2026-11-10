@@ -22,7 +22,7 @@ let accessAllowed=true;
 let notes=[{id:'note-1',author_name:'Maya · support',content:'Owner prefers written communication. Review the shared timeline, then discuss available next steps. Do not contact anyone externally without a clear request.',created_at:stamp}];
 const evidence=[{id:imageId,label:'Messages from 31 October',kind:'file',mime_type:'image/png',byte_size:png.length,sha256:createHash('sha256').update(png).digest('hex'),review_status:'under_review',created_at:stamp},{id:'20000000-0000-0000-0000-000000000022',label:'Public context link',kind:'link',mime_type:null,byte_size:0,sha256:null,review_status:'new',created_at:stamp}];
 const user={id:actor,aud:'authenticated',role:'authenticated',email:'supervisor@example.test',app_metadata:{provider:'email'},user_metadata:{},created_at:stamp};
-const token=()=>[Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url'),Buffer.from(JSON.stringify({sub:actor,aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture-signature'].join('.');
+const token=()=>[Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url'),Buffer.from(JSON.stringify({sub:actor,aal:'aal2',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)}],aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),Buffer.from('fictional-signature').toString('base64url')].join('.');
 const events=[{id:'event-3',actor_name:'Maya · support',action:'evidence_opened',created_at:stamp},{id:'event-2',actor_name:'Supervisor',action:'volunteer_assigned',created_at:stamp},{id:'event-1',actor_name:'Case owner',action:'volunteer_consent_given',created_at:stamp}];
 http.createServer(async(req,res)=>{
  res.setHeader('Access-Control-Allow-Origin','http://127.0.0.1:3002');res.setHeader('Access-Control-Allow-Headers','*');res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');res.setHeader('Access-Control-Expose-Headers','Content-Range');res.setHeader('Content-Type','application/json');
@@ -36,6 +36,9 @@ http.createServer(async(req,res)=>{
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.split('/').pop();
   const row=cases.find(c=>c.id===args.p_request_id)||cases[0];
+  if(name==='vv_worker_console'){send({workers:[{user_id:staff[0].user_id,display_name:'Maya',organisation:'Fictional support partner',requested_role:'support_volunteer',region:'bhopal',languages:'Hindi, English',skills:'Crisis listening',status:'pending'}],invites:[],reports:[{id:'report-1',worker_id:staff[0].user_id,reason:'Fictional concern for visual review only.',state:'new'}],overdue_cases:[{request_id:first,user_id:staff[0].user_id}],overdue_sos:[],access_review:[]});return;}
+  if(name==='vv_my_assignments'){send([]);return;}
+  if(name==='vv_evidence_permissions'){send([]);return;}
   if(name==='vv_can_work_case'){send(accessAllowed);return;}
   if(name==='is_admin'){send(true);return;}if(name==='vv_staff_role'){send('admin');return;}
   if(name==='vv_list_cases'){send(cases.filter(c=>(!args.p_status||c.status===args.p_status)&&(!args.p_search||`${c.id} ${c.description}`.toLowerCase().includes(args.p_search.toLowerCase()))));return;}

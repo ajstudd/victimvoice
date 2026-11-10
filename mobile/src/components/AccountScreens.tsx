@@ -226,9 +226,7 @@ function SettingsContent() {
         <Row
           title="Your account"
           subtitle={
-            session?.user.email ||
-            session?.user.phone ||
-            "Guest · Signed out"
+            session?.user.email || session?.user.phone || "Guest · Signed out"
           }
           icon="user"
           onPress={() => router.push("/login")}
@@ -254,8 +252,18 @@ function SettingsContent() {
           onPress={() => router.push("/sos-setup")}
         />
         <Row
+          title="Join the support team"
+          subtitle="Invited staff and partner volunteers: enrollment and assignments"
+          icon="users"
+          onPress={() =>
+            void run(() =>
+              Linking.openURL("https://victimvoice.vercel.app/team"),
+            )
+          }
+        />
+        <Row
           title="Emergency responder"
-          subtitle="Apply, manage duty or review authorized offers"
+          subtitle="Invited responders: manage duty and authorized requests"
           icon="users"
           onPress={() => router.push("/responder")}
         />
@@ -273,11 +281,7 @@ function SettingsContent() {
           }
           icon="shield"
         />
-        <Row
-          title="Language"
-          subtitle="English"
-          icon="globe"
-        />
+        <Row title="Language" subtitle="English" icon="globe" />
         <Row
           title="Device & permissions"
           subtitle="Check location, motion and device security"

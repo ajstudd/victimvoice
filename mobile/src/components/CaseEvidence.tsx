@@ -427,8 +427,8 @@ export function CaseEvidence({
             />
           )}
           <T kind="caption">
-            Up to 10 MB each. Your support team can open what you share, and
-            each view is recorded. Shared files can’t be changed afterwards.
+            Up to 10 MB each. Supervisors can review what you share. You choose each assigned worker’s access in Who can see.
+            Each view is recorded. Shared files can’t be changed afterwards.
           </T>
         </View>
       )}
