@@ -1,5 +1,6 @@
 import './globals.css';
 import '@/components/support-workspace.css';
+import '@/components/team-workspace.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/toaster";

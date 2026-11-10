@@ -1,5 +1,6 @@
 // Local visual QA only. Run on loopback; never point production at this server.
 import http from 'node:http';
+import {readFileSync} from 'node:fs';
 import { createHash } from 'node:crypto';
 const owner='00000000-0000-0000-0000-000000000021';
 const actor='00000000-0000-0000-0000-000000000023';
@@ -22,7 +23,11 @@ let accessAllowed=true;
 let notes=[{id:'note-1',author_name:'Maya · support',content:'Owner prefers written communication. Review the shared timeline, then discuss available next steps. Do not contact anyone externally without a clear request.',created_at:stamp}];
 const evidence=[{id:imageId,label:'Messages from 31 October',kind:'file',mime_type:'image/png',byte_size:png.length,sha256:createHash('sha256').update(png).digest('hex'),review_status:'under_review',created_at:stamp},{id:'20000000-0000-0000-0000-000000000022',label:'Public context link',kind:'link',mime_type:null,byte_size:0,sha256:null,review_status:'new',created_at:stamp}];
 const user={id:actor,aud:'authenticated',role:'authenticated',email:'supervisor@example.test',app_metadata:{provider:'email'},user_metadata:{},created_at:stamp};
-const token=()=>[Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url'),Buffer.from(JSON.stringify({sub:actor,aal:'aal2',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)}],aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),Buffer.from('fictional-signature').toString('base64url')].join('.');
+let fixtureAal='aal2';let fixtureFactors=[];
+const fakeQr=readFileSync(new URL('../design/team-portal/fixture-authenticator.svg',import.meta.url),'utf8');
+const fixtureUser=()=>({...user,factors:fixtureFactors});
+const fixtureSession=()=>({access_token:token(),refresh_token:'local-fixture-refresh',token_type:'bearer',expires_in:3600,user:fixtureUser()});
+const token=()=>[Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url'),Buffer.from(JSON.stringify({sub:actor,aal:fixtureAal,amr:[{method:fixtureAal==='aal2'?'totp':'password',timestamp:Math.floor(Date.now()/1000)}],aud:'authenticated',role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),Buffer.from('fictional-signature').toString('base64url')].join('.');
 const events=[{id:'event-3',actor_name:'Maya · support',action:'evidence_opened',created_at:stamp},{id:'event-2',actor_name:'Supervisor',action:'volunteer_assigned',created_at:stamp},{id:'event-1',actor_name:'Case owner',action:'volunteer_consent_given',created_at:stamp}];
 http.createServer(async(req,res)=>{
  res.setHeader('Access-Control-Allow-Origin','http://127.0.0.1:3002');res.setHeader('Access-Control-Allow-Headers','*');res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');res.setHeader('Access-Control-Expose-Headers','Content-Range');res.setHeader('Content-Type','application/json');
@@ -30,13 +35,17 @@ http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:54323');let body='';for await(const chunk of req)body+=chunk;
  let args={};try{args=JSON.parse(body||'{}');}catch{}
  const send=(value,status=200)=>{res.writeHead(status);res.end(JSON.stringify(value));};
- if(url.pathname==='/auth/v1/token'){send({access_token:token(),refresh_token:'local-fixture-refresh',token_type:'bearer',expires_in:3600,user});return;}
- if(url.pathname==='/auth/v1/user'){send(user);return;}
+ if(url.pathname==='/auth/v1/token'){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureFactors=[];send(fixtureSession());return;}
+ if(url.pathname==='/auth/v1/user'){send(fixtureUser());return;}
  if(url.pathname==='/auth/v1/logout'){send({});return;}
+ if(url.pathname==='/auth/v1/factors'&&req.method==='POST'){const f={id:'00000000-0000-0000-0000-000000000099',factor_type:'totp',status:'unverified',friendly_name:'Fictional staff authenticator'};fixtureFactors=[f];send({...f,type:'totp',totp:{qr_code:fakeQr,secret:'JBSWY3DPEHPK3PXP',uri:'otpauth://totp/Victim%20Voice:demo%40example.test?secret=JBSWY3DPEHPK3PXP&issuer=Victim%20Voice'}});return;}
+ if(url.pathname.endsWith('/challenge')&&url.pathname.startsWith('/auth/v1/factors/')){send({id:'fixture-challenge',expires_at:Math.floor(Date.now()/1000)+300});return;}
+ if(url.pathname.endsWith('/verify')&&url.pathname.startsWith('/auth/v1/factors/')){if(args.code!=='123456'){send({msg:'Invalid authenticator code. Try the current code.',code:'mfa_verification_failed'},422);return;}fixtureAal='aal2';fixtureFactors=fixtureFactors.map(f=>({...f,status:'verified'}));send(fixtureSession());return;}
+ if(url.pathname.startsWith('/auth/v1/factors/')&&req.method==='DELETE'){fixtureFactors=[];send({});return;}
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.split('/').pop();
   const row=cases.find(c=>c.id===args.p_request_id)||cases[0];
-  if(name==='vv_worker_console'){send({workers:[{user_id:staff[0].user_id,display_name:'Maya',organisation:'Fictional support partner',requested_role:'support_volunteer',region:'bhopal',languages:'Hindi, English',skills:'Crisis listening',status:'pending'}],invites:[],reports:[{id:'report-1',worker_id:staff[0].user_id,reason:'Fictional concern for visual review only.',state:'new'}],overdue_cases:[{request_id:first,user_id:staff[0].user_id}],overdue_sos:[],access_review:[]});return;}
+  if(name==='vv_worker_console'){send({workers:[{user_id:staff[0].user_id,display_name:'Maya Sharma',organisation:'Fictional support partner',requested_role:'support_volunteer',region:'bhopal',languages:'Hindi, English',skills:'Crisis listening and case documentation',status:'pending'},{user_id:'00000000-0000-0000-0000-000000000025',display_name:'Ananya Das',organisation:'Fictional outreach team',requested_role:'case_worker',region:'tripura',languages:'Bengali, English',skills:'Case support',status:'approved',review_due:stamp},{user_id:'00000000-0000-0000-0000-000000000026',display_name:'Priya Mishra',organisation:'Fictional community partner',requested_role:'emergency_responder',region:'bhubaneswar',languages:'Odia, Hindi',skills:'First aid',status:'probation',review_due:stamp}],invites:[],reports:[{id:'report-1',worker_id:staff[0].user_id,reason:'Fictional concern for visual review only.',state:'new'}],overdue_cases:[{request_id:first,user_id:staff[0].user_id}],overdue_sos:[],access_review:[]});return;}
   if(name==='vv_my_assignments'){send([]);return;}
   if(name==='vv_evidence_permissions'){send([]);return;}
   if(name==='vv_can_work_case'){send(accessAllowed);return;}
