@@ -32,7 +32,12 @@ async function work(kind:'sms'|'push'){
   }catch{await finish(job,'unknown',null,'network_or_worker_uncertainty');}
  }
 }
-async function drain(){await Promise.allSettled([work('sms'),work('push')]);}
+async function cleanExpiredMedia(){
+ const paths=await rpc<string[]>(service,'vv2_expired_media');
+ if(paths.length){const result=await service.storage.from('incident-evidence').remove(paths);if(result.error)throw result.error;}
+ await rpc(service,'vv_sos_cleanup');
+}
+async function drain(){await Promise.allSettled([work('sms'),work('push'),cleanExpiredMedia()]);}
 declare const EdgeRuntime:{waitUntil:(task:Promise<unknown>)=>void};
 function background(){const task=drain();if(typeof EdgeRuntime!=='undefined')EdgeRuntime.waitUntil(task);else void task;}
 Deno.serve(async req=>{

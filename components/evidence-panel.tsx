@@ -13,6 +13,8 @@ import {
 import { getSupabase } from "@/lib/supabase";
 import { supportError, reviewEvidence } from "@/lib/support";
 import {
+  evidenceRpc,
+  type EvidenceContext,
   addEvidenceLink,
   listEvidence,
   openEvidence,
@@ -28,11 +30,15 @@ import {
 type Preview = { item: EvidenceItem; blobUrl?: string; link?: string };
 export function EvidencePanel({
   requestId,
+  context = "case",
+  participantIds,
   owner = false,
   reviewer = false,
   watermark = "Private case",
 }: {
   requestId: string;
+  context?: EvidenceContext;
+  participantIds?: string[];
   owner?: boolean;
   reviewer?: boolean;
   watermark?: string;
@@ -56,31 +62,42 @@ export function EvidencePanel({
   }, []);
   const refresh = useCallback(async () => {
     try {
-      setItems(await listEvidence(getSupabase(), requestId));
+      setItems(
+        await listEvidence(getSupabase(), requestId, undefined, context),
+      );
       setError("");
     } catch (e) {
+      setItems([]);
+      clearPreview();
       setError(supportError(e));
     }
-  }, [requestId]);
+  }, [requestId, context, clearPreview]);
   useEffect(() => {
     void refresh();
     const protect = () => {
       if (document.hidden) clearPreview();
     };
+    const timer =
+      context === "incident"
+        ? setInterval(() => {
+            if (!document.hidden) void refresh();
+          }, 10000)
+        : null;
     document.addEventListener("visibilitychange", protect);
     window.addEventListener("blur", clearPreview);
     return () => {
       clearPreview();
+      if (timer) clearInterval(timer);
       document.removeEventListener("visibilitychange", protect);
       window.removeEventListener("blur", clearPreview);
     };
-  }, [refresh, clearPreview]);
+  }, [refresh, clearPreview, context]);
   useEffect(() => {
     if (!preview) return;
     let active = true;
     const timer = setInterval(() => {
       void getSupabase()
-        .rpc("vv_open_evidence", { p_evidence_id: preview.item.id })
+        .rpc(evidenceRpc("open", context), { p_evidence_id: preview.item.id })
         .then(({ error }) => {
           if (active && error) {
             clearPreview();
@@ -97,7 +114,7 @@ export function EvidencePanel({
       clearInterval(timer);
       document.removeEventListener("keydown", escape);
     };
-  }, [preview, clearPreview]);
+  }, [preview, clearPreview, context]);
   async function share() {
     if (busy) return;
     setBusy(true);
@@ -123,8 +140,18 @@ export function EvidencePanel({
           file.type,
           bytes,
           hash,
+          context,
+          participantIds,
         );
-      } else await addEvidenceLink(getSupabase(), requestId, name, link.trim());
+      } else
+        await addEvidenceLink(
+          getSupabase(),
+          requestId,
+          name,
+          link.trim(),
+          context,
+          participantIds,
+        );
       setFile(null);
       setLink("");
       setLabel("");
@@ -143,7 +170,7 @@ export function EvidencePanel({
     setBusy(true);
     setError("");
     try {
-      const opened = await openEvidence(getSupabase(), item.id);
+      const opened = await openEvidence(getSupabase(), item.id, context);
       if (generation.current !== attempt) return;
       if (opened.kind === "link") setPreview({ item, link: opened.url });
       else {
@@ -344,12 +371,17 @@ export function EvidencePanel({
               disabled={busy || (!file && !link.trim())}
               onClick={share}
             >
-              {busy ? "Sharing…" : "Share with support team"}
+              {busy
+                ? "Sharing…"
+                : context === "incident"
+                  ? "Share with current incident team"
+                  : "Share with support team"}
             </button>
           )}
           <p className="support-helper">
-            Up to 10 MB each. Your support team can open what you share, and
-            each view is recorded. Shared files can’t be changed afterwards.
+            {context === "incident"
+              ? "Up to 5 MiB each. Only the current named participants receive access. Incident files are temporary; share evidence in a separate support conversation if you want ongoing help."
+              : "Up to 10 MB each. Choose who can open your evidence under Your support team. Each view is recorded, and submitted files cannot be changed."}
           </p>
         </div>
       )}

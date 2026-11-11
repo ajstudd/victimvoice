@@ -35,7 +35,7 @@ let accessAllowed=true;
 let notes=[{id:'note-1',author_name:'Maya · support',content:'Owner prefers written communication. Review the shared timeline, then discuss available next steps. Do not contact anyone externally without a clear request.',created_at:stamp}];
 const evidence=[{id:imageId,label:'Messages from 31 October',kind:'file',mime_type:'image/png',byte_size:png.length,sha256:createHash('sha256').update(png).digest('hex'),review_status:'under_review',created_at:stamp},{id:'20000000-0000-0000-0000-000000000022',label:'Public context link',kind:'link',mime_type:null,byte_size:0,sha256:null,review_status:'new',created_at:stamp}];
 const user={id:actor,aud:'authenticated',role:'authenticated',email:'supervisor@example.test',app_metadata:{provider:'email'},user_metadata:{},created_at:stamp};
-let fixtureAal='aal2';let fixtureFactors=[];
+let fixtureRole='superadmin';let casePurpose=false;let incidentPurpose=false;let fixtureAal='aal2';let fixtureFactors=[];
 const fakeQr=readFileSync(new URL('../design/team-portal/fixture-authenticator.svg',import.meta.url),'utf8');
 const fixtureUser=()=>({...user,factors:fixtureFactors});
 const fixtureSession=()=>({access_token:token(),refresh_token:'local-fixture-refresh',token_type:'bearer',expires_in:3600,user:fixtureUser()});
@@ -48,7 +48,7 @@ http.createServer(async(req,res)=>{
  let args={};try{args=JSON.parse(body||'{}');}catch{}
  const send=(value,status=200)=>{res.writeHead(status);res.end(JSON.stringify(value));};
  if(url.pathname==='/functions/v1/sos'&&req.method==='GET'){send({relay:true,push:false});return;}
- if(url.pathname==='/auth/v1/token'){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureFactors=[];send(fixtureSession());return;}
+ if(url.pathname==='/auth/v1/token'){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureRole=args.email==='admin@example.test'?'admin':args.email==='employee@example.test'?'employee':'superadmin';fixtureFactors=[];send(fixtureSession());return;}
  if(url.pathname==='/auth/v1/user'){send(fixtureUser());return;}
  if(url.pathname==='/auth/v1/logout'){send({});return;}
  if(url.pathname==='/auth/v1/factors'&&req.method==='POST'){const f={id:'00000000-0000-0000-0000-000000000099',factor_type:'totp',status:'unverified',friendly_name:'Fictional staff authenticator'};fixtureFactors=[f];send({...f,type:'totp',totp:{qr_code:fakeQr,secret:'JBSWY3DPEHPK3PXP',uri:'otpauth://totp/Victim%20Voice:demo%40example.test?secret=JBSWY3DPEHPK3PXP&issuer=Victim%20Voice'}});return;}
@@ -58,11 +58,23 @@ http.createServer(async(req,res)=>{
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.split('/').pop();
   const row=cases.find(c=>c.id===args.p_request_id)||cases[0];
+  const scopes=[{id:'india',name:'India',kind:'country',parent_id:null},{id:'madhya_pradesh',name:'Madhya Pradesh',kind:'state',parent_id:'india'},{id:'bhopal',name:'Bhopal',kind:'city',parent_id:'madhya_pradesh'},{id:'tripura',name:'Tripura',kind:'state',parent_id:'india'},{id:'bhubaneswar',name:'Bhubaneswar',kind:'city',parent_id:'odisha'}];
+  const application={user_id:emergencyTeam[0].user_id,display_name:'Priya Mishra',organisation:'Fictional community partner',scope_id:'bhopal',scope_name:'Bhopal',status:'approved',field_status:'pending',reviewer_id:'00000000-0000-0000-0000-000000000025',reviewed_by:'00000000-0000-0000-0000-000000000025',review_due:new Date(Date.now()+86400000).toISOString(),languages:'Hindi, English',skills:'First aid, listening',availability:'Weekends in Bhopal',decision_reason:'Fictional completed training and reference review',review_reference:'FAKE-REVIEW-2026',checks:{identity:true,contact:true,references:true,interview:true,training:true,confidentiality:true,local_area:true}};
+  if(name==='vv2_context'){send({role:fixtureRole,display_name:'Fictional '+fixtureRole,memberships:fixtureRole==='superadmin'?[]:[{scope_id:'bhopal',scope_name:'Bhopal',role:fixtureRole,expires_at:new Date(Date.now()+7776000000).toISOString()}]});return;}
+  if(name==='vv2_scopes'){send(fixtureRole==='superadmin'?scopes:scopes.filter(x=>x.id==='bhopal'));return;}
+  if(name==='vv2_console'){send({staff:[{user_id:staff[0].user_id,display_name:'Maya Sharma',organisation:'Fictional support partner',role:fixtureRole==='superadmin'?'admin':'employee',scope_id:'bhopal',scope_name:'Bhopal',enabled:true,expires_at:new Date(Date.now()+7776000000).toISOString()}],invites:[],applications:[application],audit:[{id:'fixture-audit',actor_id:actor,actor_role:'employee',action:'volunteer_approved',reason:application.decision_reason,created_at:stamp}],reports:[]});return;}
+  if(name==='vv2_claim_volunteer_review'||name==='vv2_field_review'){send(application);return;}
+  if(name==='vv2_invite_staff'){send('50000000-0000-0000-0000-000000000002');return;}
+  if(name==='vv2_purpose_access'){if(args.p_kind==='case')casePurpose=true;else incidentPurpose=true;send(null);return;}
+  if(name==='vv2_incident_messages'){send([{id:'fake-incident-message',author_name:'Person requesting help',author_role:'owner',content:'Fictional chat: please stay here while I wait for my family.',created_at:stamp}]);return;}
+  if(name==='vv2_incident_participants'){send([{user_id:emergencyTeam[0].user_id,display_name:'Priya Mishra',role:'volunteer',organisation:'Fictional partner'}]);return;}
+  if(name==='vv2_list_evidence'){send([]);return;}
+  if(name?.startsWith('vv2_')){send(null);return;}
   if(name==='vv_sos_role'){send('admin');return;}
   if(name==='vv_sos_list'){send(emergencyRequests);return;}
   if(name==='vv_sos_team'){send(emergencyTeam);return;}
   if(name==='vv_sos_areas'){send({regions:[{id:'bhopal',name:'Bhopal',scope:'City / commissionerate',source_url:'https://bhopal.mppolice.gov.in/contact/',geometry:null,volunteer_enabled:false},{id:'tripura',name:'Tripura',scope:'Entire state · district-by-district onboarding',source_url:'https://tripura.gov.in/',geometry:null,volunteer_enabled:false},{id:'bhubaneswar',name:'Bhubaneswar',scope:'Bhubaneswar Urban Police District',source_url:'https://bhubaneswarcuttackpolice.gov.in/know-your-police-station/',geometry:null,volunteer_enabled:false}],agencies:[]});return;}
-  if(name==='vv_sos_read'){const r=emergencyRequests.find(x=>x.id===args.p_id);if(!r){send({message:'Incident unavailable'},403);return;}send({...r,expires_at:new Date(Date.now()+1800000).toISOString(),alias:'Fictional safety request',callback:null,latitude:23.25,longitude:77.4,accuracy:20,details_allowed:true,recipients:[{id:'fixture-contact',name:'Fictional trusted contact',state:'relay_accepted'}],accepted:1,offers:1});return;}
+  if(name==='vv_sos_read'){const r=emergencyRequests.find(x=>x.id===args.p_id);if(!r){send({message:'Incident unavailable'},403);return;}send({...r,expires_at:new Date(Date.now()+1800000).toISOString(),alias:incidentPurpose?'Fictional safety request':null,callback:null,latitude:incidentPurpose?23.25:null,longitude:incidentPurpose?77.4:null,accuracy:20,details_allowed:incidentPurpose,chat_allowed:incidentPurpose,recipients:[{id:'fixture-contact',name:'Fictional trusted contact',state:'relay_accepted'}],accepted:1,offers:1});return;}
   if(name==='vv_dispatch_team'){send([{user_id:emergencyTeam[0].user_id,display_name:emergencyTeam[0].display_name,organisation:'Fictional community partner',accepted_at:stamp,access_until:dispatchAccess}]);return;}
   if(name==='vv_dispatch_responder'){dispatchAccess=args.p_allow?new Date(Date.now()+900000).toISOString():null;send(null);return;}
   if(name==='vv_sos_close'){const r=emergencyRequests.find(x=>x.id===args.p_id);if(r)r.status=args.p_status;send(null);return;}
@@ -71,7 +83,7 @@ http.createServer(async(req,res)=>{
   if(name==='vv_my_assignments'){send([]);return;}
   if(name==='vv_evidence_permissions'){send([]);return;}
   if(name==='vv_can_work_case'){send(accessAllowed);return;}
-  if(name==='is_admin'){send(true);return;}if(name==='vv_staff_role'){send('admin');return;}
+  if(name==='is_admin'){send(true);return;}if(name==='vv_staff_role'){send(fixtureRole==='employee'?'case_worker':'admin');return;}
   if(name==='vv_list_cases'){send(cases.filter(c=>(!args.p_status||c.status===args.p_status)&&(!args.p_search||`${c.id} ${c.description}`.toLowerCase().includes(args.p_search.toLowerCase()))));return;}
   if(name==='vv_open_case'){send(row);return;}if(name==='vv_list_staff'){send(staff);return;}
   if(name==='vv_case_activity'){send(args.p_kind==='notes'?notes:events);return;}

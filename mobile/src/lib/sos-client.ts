@@ -47,6 +47,7 @@ export type SosRecord = {
   accepted: number;
   offers: number;
   details_allowed: boolean;
+  chat_allowed?: boolean;
 };
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;

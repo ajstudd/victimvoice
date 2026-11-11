@@ -6,7 +6,7 @@ const token=()=>[Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'
 const session=()=>({access_token:token(),refresh_token:'local-fixture-refresh',token_type:'bearer',expires_in:3600,user});
 const cases=[{id:'10000000-0000-0000-0000-000000000031',user_id:user.id,description:'Fictional QA case: I would like to discuss support options. No real help is needed.',status:'in_progress',created_at:new Date().toISOString(),allow_volunteer_support:false}];
 const messages=[{id:randomUUID(),request_id:cases[0].id,sender:'admin',content:'Fictional support reply: you can choose what to share here.',created_at:new Date().toISOString()}];
-const evidence=[];const objects=new Map();const contacts=[];
+let application=null;const evidence=[];const objects=new Map();const contacts=[];
 http.createServer(async(req,res)=>{
  res.setHeader('Access-Control-Allow-Origin','http://localhost:8093');res.setHeader('Access-Control-Allow-Headers','*');res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');res.setHeader('Access-Control-Expose-Headers','Content-Range');res.setHeader('Content-Type','application/json');
  if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}
@@ -35,6 +35,9 @@ http.createServer(async(req,res)=>{
  }
  if(url.pathname.startsWith('/rest/v1/rpc/')){
   const name=url.pathname.split('/').pop();
+  if(name==='vv2_volunteer_profile'){send(application?{application}:null);return;}
+  if(name==='vv2_apply_volunteer'){application={display_name:args.p_name,status:'submitted',scope_id:args.p_scope,field_status:'pending',decision_reason:null};send(null);return;}
+  if(name==='vv2_correct_application'){if(application)application.status='submitted';send(null);return;}
   if(name==='vv_set_support_consent'){const row=cases.find(c=>c.id===args.p_request_id);if(row)row.allow_volunteer_support=args.p_allowed;send(null);return;}
   if(name==='vv_list_evidence'){send(evidence.filter(e=>e.request_id===args.p_request_id&&e.complete));return;}
   if(name==='vv_add_evidence_link'){evidence.push({id:randomUUID(),request_id:args.p_request_id,label:args.p_label,kind:'link',url:args.p_url,byte_size:0,review_status:'new',created_at:new Date().toISOString(),complete:true});send(null);return;}

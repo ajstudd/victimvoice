@@ -1,30 +1,13 @@
 import React, { useCallback, useRef, useState } from "react";
-import {
-  View,
-  Pressable,
-  Switch,
-  ScrollView,
-  TextInput,
-  Modal,
-} from "react-native";
+import { View, Pressable, ScrollView, TextInput, Modal } from "react-native";
 import { router } from "expo-router";
-import {
-  Page,
-  T,
-  Button,
-  Field,
-  Notice,
-  Row,
-  Empty,
-  Icon,
-  s,
-  colors,
-} from "./ui";
+import { Page, T, Button, Field, Notice, Empty, Icon, s, colors } from "./ui";
 import { useApp } from "../state/AppState";
 import { supabase, cloudError, accountClient } from "../lib/supabase";
 import { PrivateGate } from "./PrivateGate";
 import { useConversationSync } from "../hooks/useConversationSync";
 import { insertSupportRequest } from "../lib/cloud-writes";
+import { PILOT_REGIONS } from "../../../shared/sos";
 import { CaseTeam } from "./CaseTeam";
 import { CaseEvidence } from "./CaseEvidence";
 import {
@@ -318,15 +301,13 @@ function NewRequestForm() {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [volunteers, setVolunteers] = useState(
-    vault.supportDraft?.volunteers || false,
-  );
+  const [scopeId, setScopeId] = useState(vault.supportDraft?.scopeId || "");
   const [saved, setSaved] = useState("");
   const draftMatches =
     vault.supportDraft?.body === body &&
     vault.supportDraft.category === category &&
     vault.supportDraft.priority === priority &&
-    vault.supportDraft.volunteers === volunteers;
+    (vault.supportDraft.scopeId || "") === scopeId;
   const contact =
     session?.user.email || session?.user.phone || "your account contact";
   async function saveDraft() {
@@ -336,7 +317,7 @@ function NewRequestForm() {
     try {
       await save((v) => ({
         ...v,
-        supportDraft: { body, category, priority, volunteers },
+        supportDraft: { body, category, priority, volunteers: false, scopeId },
       }));
       setSaved("Draft saved on this device only. It hasn’t been sent.");
     } catch (e) {
@@ -356,7 +337,8 @@ function NewRequestForm() {
           description: body.trim(),
           severity_level: priority,
           harassment_type: category,
-          allow_volunteer_support: volunteers,
+          allow_volunteer_support: false,
+          scope_id: scopeId || null,
         },
       );
       if (error) throw error;
@@ -456,29 +438,28 @@ function NewRequestForm() {
           </View>
         )}
       </View>
-      <View>
-        <Row
-          title="Let trained volunteers help too"
-          subtitle={
-            volunteers
-              ? "Supervisors and a volunteer they assign can read this. You can turn it off anytime."
-              : "Only supervisors will read this. You can change it anytime."
-          }
-          end={
-            <Switch
-              accessibilityLabel="Let trained volunteers help too"
-              value={volunteers}
-              onValueChange={setVolunteers}
-              trackColor={{ true: colors.jade }}
+      <View style={{ gap: 10 }}>
+        <T kind="label">Service area (optional)</T>
+        <T kind="caption">
+          Choose your area for local support. No location permission is needed.
+        </T>
+        {[{ id: "", name: "Not sure / another area" }, ...PILOT_REGIONS].map(
+          (r) => (
+            <Button
+              key={r.id}
+              title={(scopeId === r.id ? "✓ " : "") + r.name}
+              tone={scopeId === r.id ? "plum" : "outline"}
+              onPress={() => setScopeId(r.id)}
             />
-          }
-        />
+          ),
+        )}
       </View>
       <View style={[s.row, { alignItems: "flex-start" }]}>
         <Icon name="lock" size={16} color={colors.muted} />
         <T kind="caption" style={{ flex: 1 }}>
-          Sending shares this message and {contact} with the support team. Your
-          notes, circle and location are not included.
+          Assigned employees can read this conversation. Your account contact (
+          {contact}) stays private from responders. Your notes, circle and
+          location are not included.
         </T>
       </View>
       {Boolean(error) && <Notice text={error} tone="error" />}
@@ -806,53 +787,28 @@ function RequestContent({ id }: { id?: string }) {
           </View>
           {section === "privacy" && (
             <>
-              <Row
-                title="Let trained volunteers help"
-                subtitle={
-                  record.allow_volunteer_support
-                    ? "On. Reviewed volunteers may join your assigned conversation. You choose their evidence access separately."
-                    : "Off. Supervisors and assigned employed case workers can help. Volunteer access is off."
-                }
-                end={
-                  <Switch
-                    accessibilityLabel="Let trained volunteers help"
-                    value={record.allow_volunteer_support}
-                    disabled={busy}
-                    trackColor={{ true: colors.jade }}
-                    onValueChange={async (value) => {
-                      setBusy(true);
-                      setError("");
-                      try {
-                        const result = await supabase.rpc(
-                          "vv_set_support_consent",
-                          { p_request_id: id, p_allowed: value },
-                        );
-                        if (result.error) throw result.error;
-                        refresh();
-                      } catch (e) {
-                        setError(cloudError(e));
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  />
-                }
-              />
+              <T>
+                Assigned employees provide support here. Volunteers use separate
+                emergency incident chats and cannot access this conversation.
+              </T>
               <View style={{ gap: 10 }}>
                 {[
                   [
                     "eye-off",
-                    "Volunteers never see your email or phone number.",
+                    "Your account email and phone are not shown to the support team.",
                   ],
                   [
                     "user-x",
-                    "Turning volunteers off removes their access straight away.",
+                    "You can remove or report a person on your assigned team.",
                   ],
                   [
                     "lock",
                     "Your private notes and circle are never part of this conversation.",
                   ],
-                  ["activity", "Supervisors can review who opened your files."],
+                  [
+                    "activity",
+                    "File access needs your permission and is recorded.",
+                  ],
                 ].map(([icon, line]) => (
                   <View
                     key={line}

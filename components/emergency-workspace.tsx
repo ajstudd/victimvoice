@@ -29,6 +29,9 @@ import {
 import { StaffMfa } from "@/components/staff-mfa";
 import { StaffWorkspaceShell } from "@/components/staff-workspace-shell";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { IncidentChat } from "./incident-chat";
+import { PurposeAccess } from "./purpose-access";
+import { workforceLabel, type WorkforceContext } from "@/lib/workforce";
 import { useConversationSync } from "@/hooks/useConversationSync";
 import { PILOT_REGIONS } from "@/shared/sos";
 type Incident = {
@@ -65,6 +68,8 @@ type DispatchMember = {
   organisation: string;
   accepted_at: string | null;
   access_until: string | null;
+  response_state?: string;
+  check_in_at?: string;
 };
 type Review = {
   user_id: string;
@@ -86,13 +91,17 @@ type RecordView = Incident & {
   accuracy: number | null;
   expires_at: string;
   details_allowed: boolean;
+  chat_allowed?: boolean;
   recipients: { id: string; name: string; state: string }[] | null;
   accepted: number;
   offers: number;
 };
 type Coverage = { regions: Area[]; agencies: Area[] };
 type Capabilities = { push: boolean; relay: boolean } | null;
+type DeskAlert = { id: string; region_id: string };
 type Payload = {
+  alerts: DeskAlert[];
+  helperAlerts: DeskAlert[];
   role: string;
   rows: Incident[];
   members: Team[];
@@ -111,16 +120,7 @@ const time = (s: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
-const roleName = (role: string | null) =>
-  role === "admin"
-    ? "Supervisor"
-    : role === "volunteer"
-      ? "Emergency responder"
-      : role === "police"
-        ? "Police recipient"
-        : role === "pending"
-          ? "Pending review"
-          : "Staff verification";
+
 const routeCopy = (s: string) =>
   ({
     not_requested: "Not requested",
@@ -180,7 +180,7 @@ export function EmergencyWorkspace() {
     return () => data.subscription.unsubscribe();
   }, []);
   return (
-    <StaffWorkspaceShell active="emergency" role={roleName(role)}>
+    <StaffWorkspaceShell active="emergency" role={role || "Connecting"}>
       <StaffMfa key={scope}>
         <Session onRole={setRole} />
       </StaffMfa>
@@ -189,6 +189,9 @@ export function EmergencyWorkspace() {
 }
 function Session({ onRole }: { onRole: (role: string | null) => void }) {
   const [role, setRole] = useState<string | null>(null),
+    [root, setRoot] = useState(false),
+    [alerts, setAlerts] = useState<DeskAlert[]>([]),
+    [helperAlerts, setHelperAlerts] = useState<DeskAlert[]>([]),
     [incidents, setIncidents] = useState<Incident[]>([]),
     [team, setTeam] = useState<Team[]>([]),
     [areas, setAreas] = useState<Coverage>({ regions: [], agencies: [] }),
@@ -235,12 +238,18 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
       const rr = await client.rpc("vv_sos_role").abortSignal(signal);
       if (rr.error) throw rr.error;
       const role = rr.data || "none";
+      const context = await client.rpc("vv2_context").abortSignal(signal);
+      if (context.error) throw context.error;
+      setRoot(context.data.role === "superadmin");
+      onRole(workforceLabel(context.data.role));
       let members: Team[] = [],
         map: Coverage = { regions: [], agencies: [] },
         reviews: Review[] = [],
         detail: RecordView | null = null,
         dispatch: DispatchMember[] = [],
         rows: Incident[] = [];
+      let alerts: DeskAlert[] = [],
+        helperAlerts: DeskAlert[] = [];
       let cap: Capabilities = null;
       if (["admin", "volunteer", "police"].includes(role)) {
         const list = await client.rpc("vv_sos_list").abortSignal(signal);
@@ -257,6 +266,8 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
           members = a.data || [];
           map = b.data || map;
           reviews = c.data?.workers || [];
+          alerts = c.data?.overdue_sos || [];
+          helperAlerts = c.data?.helper_alerts || [];
         }
         if (selected) {
           const a = await client
@@ -290,6 +301,8 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
         }
       }
       return {
+        alerts,
+        helperAlerts,
         role,
         rows,
         members,
@@ -301,25 +314,24 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
         checkedAt: Date.now(),
       };
     },
-    [selected],
+    [selected, onRole],
   );
-  const receive = useCallback(
-    (r: Payload) => {
-      setRole(r.role);
-      onRole(r.role);
-      setIncidents(r.rows);
-      setTeam(r.members);
-      setAreas(r.map);
-      setReviews(r.reviews);
-      setRecord(r.detail);
-      setDispatch(r.dispatch);
-      setCap(r.cap);
-      setCheckedAt(r.checkedAt);
-      setLoaded(true);
-      setError("");
-    },
-    [onRole],
-  );
+  const receive = useCallback((r: Payload) => {
+    setRole(r.role);
+    setAlerts(r.alerts);
+    setHelperAlerts(r.helperAlerts);
+
+    setIncidents(r.rows);
+    setTeam(r.members);
+    setAreas(r.map);
+    setReviews(r.reviews);
+    setRecord(r.detail);
+    setDispatch(r.dispatch);
+    setCap(r.cap);
+    setCheckedAt(r.checkedAt);
+    setLoaded(true);
+    setError("");
+  }, []);
   const failed = useCallback((e: unknown) => {
     setRecord(null);
     setSelected(null);
@@ -362,8 +374,8 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
             ? args.p_allow
               ? "Location access assigned. This does not confirm arrival."
               : "Location access revoked."
-            : name === "vv_sos_approve"
-              ? "Responder approval updated. Duty status has been reset."
+            : name === "vv_sos_read"
+              ? "Private incident access opened."
               : "Reviewed boundary saved.",
       );
       refresh();
@@ -432,6 +444,33 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
           </button>
         </p>
       )}
+      {!hidden &&
+        role === "admin" &&
+        (alerts.length > 0 || helperAlerts.length > 0) && (
+          <section className="tm-alert" role="status">
+            <strong>Needs coordinator attention</strong>
+            {helperAlerts.map((a) => (
+              <p key={"helper" + a.id}>
+                <button className="tm-text-button" onClick={() => choose(a.id)}>
+                  Helper reported an unsafe assignment · {areaName(a.region_id)}{" "}
+                  · #{a.id.slice(0, 8)}
+                </button>
+              </p>
+            ))}
+            {alerts.map((a) => (
+              <p key={a.id}>
+                <button className="tm-text-button" onClick={() => choose(a.id)}>
+                  No eligible responder currently dispatched ·{" "}
+                  {areaName(a.region_id)} · #{a.id.slice(0, 8)}
+                </button>
+              </p>
+            ))}
+            <p>
+              This desk must be staffed. No external escalation notification is
+              guaranteed.
+            </p>
+          </section>
+        )}
       {hidden ? (
         <section className="tm-panel">
           <Empty
@@ -726,8 +765,9 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
                       Responder approval is separate from supervisor access.
                     </strong>
                     <p>
-                      Supervisor accounts are assigned by the project owner.
-                      Joining or being approved here never promotes an account.
+                      Superadmins are provisioned in the database. Area admins
+                      are appointed in Team & access. Joining or being approved
+                      here never promotes an account.
                     </p>
                   </div>
                   <Link href="/team">
@@ -763,13 +803,30 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
                     <Empty
                       icon={Users}
                       title="No responder applications yet"
-                      text="Invite known partners through Team & access. Case-support approval alone does not grant emergency access."
+                      text="Volunteers apply in the app. An employee reviews each application, and an independent area admin approves field response."
                     />
                   )}
                 </section>
               </>
             )}
-            {tab === "coverage" && role === "admin" && (
+            {tab === "coverage" && role === "admin" && !root && (
+              <section className="tm-panel" style={{ padding: 24 }}>
+                <h2>Your service areas</h2>
+                <p>
+                  Geographic boundaries are reviewed by the superadmin.
+                  Administrative role scope does not establish police coverage.
+                </p>
+                {areas.regions.map((a) => (
+                  <p key={a.id}>
+                    {a.name} ·{" "}
+                    {a.volunteer_enabled
+                      ? "Response enabled"
+                      : "Response not enabled"}
+                  </p>
+                ))}
+              </section>
+            )}
+            {tab === "coverage" && role === "admin" && root && (
               <CoverageWorkspace areas={areas} busy={busy} run={run} />
             )}
           </section>
@@ -811,252 +868,274 @@ function RequestDetails({
           {r.status}
         </span>
       </div>
-      <div className="ed-context">
-        <div className="ed-request-summary">
-          <div>
-            <span>Offers sent</span>
-            <strong>{r.offers}</strong>
-          </div>
-          <div>
-            <span>Acknowledgements</span>
-            <strong>{r.accepted}</strong>
-          </div>
-          <div>
-            <span>Police routing</span>
-            <strong className="ed-route-value">{routeCopy(r.routing)}</strong>
-          </div>
-        </div>
-        <section className="ed-detail-section">
-          <h3>
-            <MapPin size={16} />
-            Shared location
-          </h3>
-          {r.latitude != null && r.longitude != null ? (
-            <div className="ed-location">
-              <span className="ed-location-marker">
-                <MapPin size={22} />
-              </span>
-              <div>
-                <strong>
-                  {r.latitude.toFixed(5)}, {r.longitude.toFixed(5)}
-                </strong>
-                <p>
-                  Shared snapshot · accuracy{" "}
-                  {r.accuracy == null
-                    ? "not reported"
-                    : `${Math.round(r.accuracy)} m`}
-                </p>
-              </div>
-              <LockKeyhole size={16} />
+      {role === "admin" && !r.details_allowed && current ? (
+        <PurposeAccess
+          key={r.id}
+          id={r.id}
+          kind="incident"
+          onChanged={() =>
+            void run("vv_sos_read", { p_id: r.id }).catch(() => {})
+          }
+        >
+          <p>Access granted. Refreshing incident…</p>
+        </PurposeAccess>
+      ) : (
+        <div className="ed-context">
+          <div className="ed-request-summary">
+            <div>
+              <span>Offers sent</span>
+              <strong>{r.offers}</strong>
             </div>
-          ) : (
-            <p className="ed-muted-copy">
-              {r.details_allowed
-                ? "No usable location was shared."
-                : "Precise location stays private until a supervisor assigns access."}
-            </p>
-          )}
-          {r.callback && role === "admin" && (
-            <p className="ed-callback">
-              Chosen callback <a href={`tel:${r.callback}`}>{r.callback}</a>
-            </p>
-          )}
-        </section>
-        {role === "admin" && (
-          <section className="ed-detail-section">
-            <div className="ed-section-heading">
-              <h3>
-                <Users size={16} />
-                Responder coordination
-              </h3>
-              <span className="tm-count">{responders.length}</span>
+            <div>
+              <span>Acknowledgements</span>
+              <strong>{r.accepted}</strong>
             </div>
-            <p className="ed-muted-copy">
-              Assign location access only after confirming availability and
-              responsibility. Access lasts up to 15 minutes.
-            </p>
-            {responders.length ? (
-              responders.map((p) => {
-                const assigned =
-                  !!p.access_until && Date.parse(p.access_until) > checkedAt;
-                return (
-                  <article className="ed-dispatch-row" key={p.user_id}>
-                    <div>
-                      <span className="tm-avatar">
-                        {p.display_name
-                          .trim()
-                          .split(/\s+/)
-                          .slice(0, 2)
-                          .map((s) => s[0])
-                          .join("")}
-                      </span>
-                      <div>
-                        <strong>{p.display_name}</strong>
-                        <p>{p.organisation}</p>
-                        <small>
-                          {p.accepted_at
-                            ? "Availability acknowledged"
-                            : "Awaiting acknowledgement"}
-                        </small>
-                      </div>
-                    </div>
-                    <div className="ed-dispatch-actions">
-                      {assigned ? (
-                        <span className="ed-access-until">
-                          <CheckCircle2 size={13} />
-                          Access until {time(p.access_until!)}
-                        </span>
-                      ) : (
-                        <span className="ed-access-until muted">
-                          No location assignment
-                        </span>
-                      )}
-                      <div className="tm-actions">
-                        <button
-                          className="tm-button secondary"
-                          disabled={busy || !p.accepted_at || !current}
-                          onClick={() =>
-                            void run("vv_dispatch_responder", {
-                              p_event: r.id,
-                              p_worker: p.user_id,
-                              p_allow: true,
-                            }).catch(() => {})
-                          }
-                        >
-                          {assigned ? "Extend access" : "Assign access"}
-                        </button>
-                        <button
-                          className="tm-text-button danger"
-                          disabled={busy || !assigned}
-                          onClick={() =>
-                            void run("vv_dispatch_responder", {
-                              p_event: r.id,
-                              p_worker: p.user_id,
-                              p_allow: false,
-                            }).catch(() => {})
-                          }
-                        >
-                          Revoke
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })
-            ) : (
-              <div className="ed-inline-empty">
-                <Users size={18} />
-                <p>
-                  No eligible responders are offered this request. Coordinate
-                  through your agreed response channels.
-                </p>
-              </div>
-            )}
-          </section>
-        )}
-        {r.recipients && (
+            <div>
+              <span>Police routing</span>
+              <strong className="ed-route-value">{routeCopy(r.routing)}</strong>
+            </div>
+          </div>
           <section className="ed-detail-section">
             <h3>
-              <MessageSquare size={16} />
-              Contact messages
+              <MapPin size={16} />
+              Shared location
             </h3>
-            {r.recipients.length ? (
-              r.recipients.map((c) => (
-                <div className="ed-recipient" key={c.id}>
-                  <span>{c.name}</span>
-                  <span
-                    className={`ed-delivery ${["delivered", "relay_delivered"].includes(c.state) ? "confirmed" : ""}`}
-                  >
-                    {deliveryCopy(c.state)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="ed-muted-copy">No contact messages are recorded.</p>
-            )}
-            <p className="tm-note">
-              Provider acceptance or “sent” does not confirm delivery or a
-              person responding.
-            </p>
-          </section>
-        )}
-        <footer className="ed-resolution">
-          {role === "admin" ? (
-            current ? (
-              confirmResolve ? (
-                <div className="ed-confirm">
-                  <strong>Mark this request as resolved?</strong>
+            {r.latitude != null && r.longitude != null ? (
+              <div className="ed-location">
+                <span className="ed-location-marker">
+                  <MapPin size={22} />
+                </span>
+                <div>
+                  <strong>
+                    {r.latitude.toFixed(5)}, {r.longitude.toFixed(5)}
+                  </strong>
                   <p>
-                    Pending dispatch stops. Confirm the situation has been
-                    addressed before closing.
+                    Shared snapshot · accuracy{" "}
+                    {r.accuracy == null
+                      ? "not reported"
+                      : `${Math.round(r.accuracy)} m`}
                   </p>
-                  <div className="tm-actions">
-                    <button
-                      className="tm-button"
-                      disabled={busy}
-                      onClick={() =>
-                        void run("vv_sos_close", {
-                          p_id: r.id,
-                          p_status: "resolved",
-                        })
-                          .then(() => setConfirmResolve(false))
-                          .catch(() => {})
-                      }
-                    >
-                      Confirm resolved
-                    </button>
-                    <button
-                      className="tm-button secondary"
-                      onClick={() => setConfirmResolve(false)}
-                    >
-                      Keep open
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                <button
-                  className="tm-button secondary"
-                  disabled={busy}
-                  onClick={() => setConfirmResolve(true)}
-                >
-                  <CheckCircle2 size={16} />
-                  Mark resolved
-                </button>
-              )
+                <LockKeyhole size={16} />
+              </div>
             ) : (
               <p className="ed-muted-copy">
-                This request is closed or expired. New location assignments are
-                unavailable.
+                {r.details_allowed
+                  ? "No usable location was shared."
+                  : "Precise location stays private until a supervisor assigns access."}
               </p>
-            )
-          ) : (
-            <button
-              className="tm-button"
-              disabled={busy || !current}
-              onClick={() =>
-                void run("vv_sos_accept", { p_id: r.id }).catch(() => {})
-              }
-            >
-              <UserCheck size={17} />
-              Acknowledge availability
-            </button>
+            )}
+            {r.callback && role === "admin" && (
+              <p className="ed-callback">
+                Chosen callback <a href={`tel:${r.callback}`}>{r.callback}</a>
+              </p>
+            )}
+          </section>
+          {role === "admin" && (
+            <section className="ed-detail-section">
+              <div className="ed-section-heading">
+                <h3>
+                  <Users size={16} />
+                  Responder coordination
+                </h3>
+                <span className="tm-count">{responders.length}</span>
+              </div>
+              <p className="ed-muted-copy">
+                Assign location access only after confirming availability and
+                responsibility. Access lasts up to 15 minutes.
+              </p>
+              {responders.length ? (
+                responders.map((p) => {
+                  const assigned =
+                    !!p.access_until && Date.parse(p.access_until) > checkedAt;
+                  return (
+                    <article className="ed-dispatch-row" key={p.user_id}>
+                      <div>
+                        <span className="tm-avatar">
+                          {p.display_name
+                            .trim()
+                            .split(/\s+/)
+                            .slice(0, 2)
+                            .map((s) => s[0])
+                            .join("")}
+                        </span>
+                        <div>
+                          <strong>{p.display_name}</strong>
+                          <p>{p.organisation}</p>
+                          <small>
+                            {p.accepted_at
+                              ? "Availability acknowledged"
+                              : "Awaiting acknowledgement"}
+                          </small>
+                        </div>
+                      </div>
+                      <div className="ed-dispatch-actions">
+                        <small>
+                          {p.response_state?.replaceAll("_", " ") || "offered"}
+                          {p.check_in_at
+                            ? ` · last check-in ${time(p.check_in_at)}`
+                            : ""}
+                          {p.response_state === "arrived"
+                            ? " · reported by responder"
+                            : ""}
+                        </small>
+                        {assigned ? (
+                          <span className="ed-access-until">
+                            <CheckCircle2 size={13} />
+                            Access until {time(p.access_until!)}
+                          </span>
+                        ) : (
+                          <span className="ed-access-until muted">
+                            No location assignment
+                          </span>
+                        )}
+                        <div className="tm-actions">
+                          <button
+                            className="tm-button secondary"
+                            disabled={busy || !p.accepted_at || !current}
+                            onClick={() =>
+                              void run("vv_dispatch_responder", {
+                                p_event: r.id,
+                                p_worker: p.user_id,
+                                p_allow: true,
+                              }).catch(() => {})
+                            }
+                          >
+                            {assigned ? "Extend access" : "Assign access"}
+                          </button>
+                          <button
+                            className="tm-text-button danger"
+                            disabled={busy || !assigned}
+                            onClick={() =>
+                              void run("vv_dispatch_responder", {
+                                p_event: r.id,
+                                p_worker: p.user_id,
+                                p_allow: false,
+                              }).catch(() => {})
+                            }
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="ed-inline-empty">
+                  <Users size={18} />
+                  <p>
+                    No eligible responders are offered this request. Coordinate
+                    through your agreed response channels.
+                  </p>
+                </div>
+              )}
+            </section>
           )}
-          <p className="tm-note">
-            Acknowledgement is not confirmation of arrival. Sent messages cannot
-            be recalled.
-          </p>
-        </footer>
-      </div>
+          {r.recipients && (
+            <section className="ed-detail-section">
+              <h3>
+                <MessageSquare size={16} />
+                Contact messages
+              </h3>
+              {r.recipients.length ? (
+                r.recipients.map((c) => (
+                  <div className="ed-recipient" key={c.id}>
+                    <span>{c.name}</span>
+                    <span
+                      className={`ed-delivery ${["delivered", "relay_delivered"].includes(c.state) ? "confirmed" : ""}`}
+                    >
+                      {deliveryCopy(c.state)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="ed-muted-copy">
+                  Trusted-contact delivery details are private to the person
+                  requesting help.
+                </p>
+              )}
+              <p className="tm-note">
+                Provider acceptance or “sent” does not confirm delivery or a
+                person responding.
+              </p>
+            </section>
+          )}
+          <footer className="ed-resolution">
+            {role === "admin" ? (
+              current ? (
+                confirmResolve ? (
+                  <div className="ed-confirm">
+                    <strong>Mark this request as resolved?</strong>
+                    <p>
+                      Pending dispatch stops. Confirm the situation has been
+                      addressed before closing.
+                    </p>
+                    <div className="tm-actions">
+                      <button
+                        className="tm-button"
+                        disabled={busy}
+                        onClick={() =>
+                          void run("vv_sos_close", {
+                            p_id: r.id,
+                            p_status: "resolved",
+                          })
+                            .then(() => setConfirmResolve(false))
+                            .catch(() => {})
+                        }
+                      >
+                        Confirm resolved
+                      </button>
+                      <button
+                        className="tm-button secondary"
+                        onClick={() => setConfirmResolve(false)}
+                      >
+                        Keep open
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="tm-button secondary"
+                    disabled={busy}
+                    onClick={() => setConfirmResolve(true)}
+                  >
+                    <CheckCircle2 size={16} />
+                    Mark resolved
+                  </button>
+                )
+              ) : (
+                <p className="ed-muted-copy">
+                  This request is closed or expired. New location assignments
+                  are unavailable.
+                </p>
+              )
+            ) : (
+              <button
+                className="tm-button"
+                disabled={busy || !current}
+                onClick={() =>
+                  void run("vv_sos_accept", { p_id: r.id }).catch(() => {})
+                }
+              >
+                <UserCheck size={17} />
+                Acknowledge availability
+              </button>
+            )}
+            <p className="tm-note">
+              Acknowledgement is not confirmation of arrival. Sent messages
+              cannot be recalled.
+            </p>
+          </footer>
+          {r.chat_allowed && <IncidentChat key={r.id} eventId={r.id} />}
+        </div>
+      )}
     </>
   );
 }
 function ResponderRow({
   person: p,
-  review,
-  agencies,
   checkedAt,
-  busy,
-  run,
 }: {
   person: Team;
   review?: Review;
@@ -1065,151 +1144,26 @@ function ResponderRow({
   busy: boolean;
   run: Mutate;
 }) {
-  const [kind, setKind] = useState(p.kind),
-    [agency, setAgency] = useState(p.agency_id || "");
-  const eligible =
-    !!review &&
-    ["approved", "probation"].includes(review.status) &&
-    !!review.review_due &&
-    Date.parse(review.review_due) > checkedAt &&
-    review.requested_role === "emergency_responder" &&
-    review.identity_checked &&
-    review.reference_checked &&
-    review.interview_checked &&
-    review.training_checked &&
-    review.confidentiality_checked;
-  const available = !!p.duty_until && Date.parse(p.duty_until) > checkedAt;
-  const options = agencies.filter(
-    (a) => a.enabled && a.verified_at && a.region_id === p.region_id,
-  );
+  const duty = !!p.duty_until && Date.parse(p.duty_until) > checkedAt;
   return (
-    <details className="ed-responder">
-      <summary>
-        <span className="tm-person-identity">
-          <span className="tm-avatar">
-            {p.display_name
-              .trim()
-              .split(/\s+/)
-              .slice(0, 2)
-              .map((s) => s[0])
-              .join("")}
-          </span>
-          <span>
-            <strong>{p.display_name}</strong>
-            <small>
-              {review?.organisation || "Organisation pending review"} ·{" "}
-              {areaName(p.region_id)}
-            </small>
-          </span>
-        </span>
-        <span
-          className={`tm-status ${p.approved && eligible ? "approved" : "pending"}`}
-        >
-          {p.approved && eligible
-            ? available
-              ? "On duty"
-              : "Approved"
-            : eligible
-              ? "Ready for approval"
-              : "Review required"}
-        </span>
-        <ChevronDown size={16} />
-      </summary>
-      <div className="ed-responder-body">
-        <div>
-          <h3>Review & responsibilities</h3>
-          <p className="ed-muted-copy">
-            {eligible
-              ? "Workforce review is current. Confirm this person’s emergency responsibilities before approving."
-              : "Complete the invited application, checks and training before emergency approval."}
-          </p>
-          <Link className="tm-text-button" href="/team">
-            Open team review <ArrowUpRight size={14} />
-          </Link>
-          <details className="tm-small-details">
-            <summary>Account reference</summary>
-            <code>{p.user_id}</code>
-          </details>
-          <p className="tm-note">
-            Changing approval resets duty and removes existing location
-            assignments.
-          </p>
-        </div>
-        <form
-          className="tm-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void run("vv_sos_approve", {
-              p_user: p.user_id,
-              p_approved: true,
-              p_kind: kind,
-              p_agency: kind === "police" ? agency : null,
-            }).catch(() => {});
-          }}
-        >
-          <label>
-            Emergency role
-            <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="volunteer">Community responder</option>
-              <option value="police">Verified police recipient</option>
-            </select>
-          </label>
-          {kind === "police" && (
-            <label>
-              Verified receiving agency
-              <select
-                required
-                value={agency}
-                onChange={(e) => setAgency(e.target.value)}
-              >
-                <option value="">
-                  Choose an agency in {areaName(p.region_id)}
-                </option>
-                {options.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-              <small>
-                Only enabled, verified agencies in this service area can be
-                selected.
-              </small>
-            </label>
-          )}
-          <div className="tm-actions">
-            <button
-              className="tm-button"
-              disabled={
-                busy ||
-                !eligible ||
-                (kind === "police" && !options.some((a) => a.id === agency))
-              }
-            >
-              <UserCheck size={16} />
-              {p.approved ? "Update approval" : "Approve responder"}
-            </button>
-            <button
-              type="button"
-              className="tm-text-button danger"
-              disabled={busy || !p.approved}
-              onClick={() =>
-                void run("vv_sos_approve", {
-                  p_user: p.user_id,
-                  p_approved: false,
-                  p_kind: p.kind,
-                  p_agency: p.agency_id,
-                }).catch(() => {})
-              }
-            >
-              Suspend emergency access
-            </button>
-          </div>
-        </form>
+    <article className="ed-dispatch-row">
+      <div>
+        <h3>{p.display_name}</h3>
+        <p>
+          {areaName(p.region_id)} · {p.kind}
+        </p>
+        <small>
+          {p.approved ? "Field approval recorded" : "Not field approved"} ·{" "}
+          {duty ? "On duty" : "Off duty"}
+        </small>
       </div>
-    </details>
+      <Link className="tm-button secondary" href="/team">
+        Review eligibility in Team & access
+      </Link>
+    </article>
   );
 }
+
 function CoverageWorkspace({
   areas,
   busy,

@@ -1,7 +1,9 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { View, Linking } from "react-native";
+import { View, Switch } from "react-native";
 import { router } from "expo-router";
-import { Page, T, Button, Row, Notice, Badge, s } from "./ui";
+import { Page, T, Field, Button, Row, Notice, Badge, s } from "./ui";
+import { IncidentChat } from "./IncidentChat";
+import { PILOT_REGIONS, isUuid } from "../../../shared/sos";
 import { StaffMfa } from "./StaffMfa";
 import { PrivateGate } from "./PrivateGate";
 import { useApp } from "../state/AppState";
@@ -9,15 +11,254 @@ import { accountClient } from "../lib/supabase";
 import { currentLocation } from "../lib/actions";
 import { registerResponderPush } from "../lib/push";
 import { useConversationSync } from "../hooks/useConversationSync";
-import { isUuid } from "../../../shared/sos";
 import type { SosRecord } from "../lib/sos-client";
 export function Responder() {
   return (
     <PrivateGate>
+      <VolunteerEntry />
+    </PrivateGate>
+  );
+}
+type Application = {
+  display_name: string;
+  status: string;
+  scope_id: string;
+  field_status: string;
+  decision_reason: string | null;
+  review_due: string | null;
+  field_review_due: string | null;
+  languages: string;
+  skills: string;
+  availability: string;
+};
+function VolunteerEntry() {
+  const { session } = useApp();
+  const [application, setApplication] = useState<Application | null>(null),
+    [ready, setReady] = useState(false),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [name, setName] = useState(""),
+    [area, setArea] = useState("bhopal"),
+    [org, setOrg] = useState(""),
+    [languages, setLanguages] = useState(""),
+    [skills, setSkills] = useState(""),
+    [availability, setAvailability] = useState(""),
+    [consent, setConsent] = useState(false),
+    [note, setNote] = useState("");
+  const load = useCallback(
+    async (signal: AbortSignal) => {
+      if (!session) return null;
+      const r = await accountClient(session)
+        .rpc("vv2_volunteer_profile")
+        .abortSignal(signal);
+      if (r.error) throw r.error;
+      return r.data?.application as Application | null;
+    },
+    [session],
+  );
+  const receive = useCallback((a: Application | null) => {
+    setApplication(a);
+    setReady(true);
+    setError("");
+  }, []);
+  const failed = useCallback((e: unknown) => {
+    setReady(false);
+    setError((e as Error).message);
+  }, []);
+  const refresh = useConversationSync(load, receive, failed);
+  if (
+    application?.status === "approved" &&
+    application.field_status === "approved"
+  )
+    return (
       <StaffMfa>
         <ResponderContent />
       </StaffMfa>
-    </PrivateGate>
+    );
+  return (
+    <Page back title="Offer support" onRefresh={refresh}>
+      <Badge label="LOCAL VOLUNTEERS" />
+      <T kind="title">Help with care.</T>
+      <T>
+        Apply to support people in your area. An employee will review your
+        application, checks and training. Field response needs separate approval
+        from an area admin.
+      </T>
+      {!session ? (
+        <Button
+          title="Sign in to apply"
+          onPress={() => router.push("/login")}
+        />
+      ) : !ready ? (
+        <T>Checking your application…</T>
+      ) : application ? (
+        <>
+          <View style={s.panel}>
+            <T kind="heading">{application.display_name}</T>
+            <T>Application: {application.status.replaceAll("_", " ")}</T>
+            <T>Field response: {application.field_status}</T>
+            <T>
+              {application.decision_reason ||
+                "Your application is waiting for a local employee to review it."}
+            </T>
+            {application.review_due && (
+              <T kind="caption">
+                Review due{" "}
+                {new Date(application.review_due).toLocaleDateString()}
+              </T>
+            )}
+          </View>
+          {["changes_requested", "rejected"].includes(application.status) && (
+            <>
+              <T kind="heading">Correct or appeal</T>
+              <Field
+                label="Languages"
+                value={languages}
+                onChangeText={setLanguages}
+              />
+              <Field
+                label="Relevant skills and training"
+                multiline
+                value={skills}
+                onChangeText={setSkills}
+              />
+              <Field
+                label="Availability and local area"
+                multiline
+                value={availability}
+                onChangeText={setAvailability}
+              />
+              <Field
+                label="What should the reviewer reconsider?"
+                multiline
+                value={note}
+                onChangeText={setNote}
+              />
+              <Button
+                title="Submit for another review"
+                busy={busy}
+                disabled={note.trim().length < 10}
+                onPress={async () => {
+                  setBusy(true);
+                  try {
+                    const r = await accountClient(session).rpc(
+                      "vv2_correct_application",
+                      {
+                        p_languages: languages,
+                        p_skills: skills,
+                        p_availability: availability,
+                        p_note: note,
+                      },
+                    );
+                    if (r.error) throw r.error;
+                    refresh();
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            </>
+          )}
+          <T kind="caption">
+            Applying gives no access to people’s cases or locations. You will be
+            asked to set up an authenticator before receiving assignments.
+          </T>
+        </>
+      ) : (
+        <>
+          <Field
+            label="Your display name"
+            value={name}
+            onChangeText={setName}
+            maxLength={80}
+          />
+          <T kind="label">Where can you help?</T>
+          {PILOT_REGIONS.map((r) => (
+            <Button
+              key={r.id}
+              title={(area === r.id ? "✓ " : "") + r.name}
+              tone={area === r.id ? "plum" : "outline"}
+              onPress={() => setArea(r.id)}
+            />
+          ))}
+          <Field
+            label="Organisation (optional)"
+            value={org}
+            onChangeText={setOrg}
+            maxLength={120}
+          />
+          <Field
+            label="Languages you can use"
+            value={languages}
+            onChangeText={setLanguages}
+            maxLength={250}
+          />
+          <Field
+            label="Relevant skills and training"
+            value={skills}
+            onChangeText={setSkills}
+            multiline
+            maxLength={500}
+          />
+          <Field
+            label="Availability and local knowledge"
+            value={availability}
+            onChangeText={setAvailability}
+            multiline
+            maxLength={500}
+          />
+          <Notice text="Your application is shared with authorized local reviewers. They may request identity and reference checks through a restricted process. Do not upload ID documents into support conversations. Approval never gives access to private journals or ordinary support cases." />
+          <Row
+            title="I agree to review, training and confidentiality checks"
+            subtitle="I understand that I must respect consent, stay in the app and may decline an unsafe task."
+            end={
+              <Switch
+                value={consent}
+                onValueChange={setConsent}
+                accessibilityLabel="Agree to volunteer application notice"
+              />
+            }
+          />
+          <Button
+            title="Apply as a volunteer"
+            busy={busy}
+            disabled={
+              !consent ||
+              name.trim().length < 2 ||
+              languages.trim().length < 2 ||
+              skills.trim().length < 2 ||
+              availability.trim().length < 2
+            }
+            onPress={async () => {
+              setBusy(true);
+              try {
+                const r = await accountClient(session).rpc(
+                  "vv2_apply_volunteer",
+                  {
+                    p_scope: area,
+                    p_name: name,
+                    p_organisation: org,
+                    p_languages: languages,
+                    p_skills: skills,
+                    p_availability: availability,
+                    p_consent: consent,
+                  },
+                );
+                if (r.error) throw r.error;
+                refresh();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        </>
+      )}
+      {!!error && <Notice text={error} tone="error" />}
+    </Page>
   );
 }
 function ResponderContent() {
@@ -87,29 +328,18 @@ function ResponderContent() {
       ) : (
         <>
           {!profile ? (
-            <>
-              <T>
-                Emergency responders join by invitation from a partner
-                supervisor. Complete your application and training before
-                responding to requests.
-              </T>
-              <Button
-                title="Open team enrollment"
-                onPress={() =>
-                  void Linking.openURL(
-                    "https://victimvoice.vercel.app/team",
-                  ).catch(() => setMessage("Could not open team enrollment."))
-                }
-              />
-            </>
+            <T>
+              Your review is being updated. Return to Offer support to check
+              your application.
+            </T>
           ) : (
             <>
               <T kind="heading">{profile.display_name}</T>
               <Notice
                 text={
                   profile.approved
-                    ? `Approved ${profile.kind}. Duty and receiving-device registration are separate steps.`
-                    : "Application pending. A supervisor must verify and approve you before any incident is offered."
+                    ? `Approved ${profile.kind}. Go on duty only while you can safely respond.`
+                    : "Your field review has expired or been suspended. Ask your local team for a review before returning to duty."
                 }
               />
               {profile.approved && (
@@ -238,8 +468,9 @@ function CaseContent({ id }: { id?: string }) {
           {!record.details_allowed ? (
             <>
               <T>
-                Your acknowledgement tells the supervisor you are available.
-                Precise location stays private until a supervisor assigns you.
+                Your acknowledgement tells the area coordinator you are
+                available. Precise location stays private until a area
+                coordinator assigns you.
               </T>
               <Button
                 title="I’m available · Acknowledge"
@@ -261,6 +492,27 @@ function CaseContent({ id }: { id?: string }) {
                   }
                 }}
               />
+              <Button
+                title="Decline / withdraw from this request"
+                tone="outline"
+                busy={busy}
+                onPress={async () => {
+                  if (!session) return;
+                  setBusy(true);
+                  try {
+                    const r = await accountClient(session).rpc(
+                      "vv2_responder_checkin",
+                      { p_event: id, p_state: "withdrawn" },
+                    );
+                    if (r.error) throw r.error;
+                    router.back();
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
             </>
           ) : (
             <View style={s.panel}>
@@ -270,27 +522,46 @@ function CaseContent({ id }: { id?: string }) {
                   ? `Location: ${record.latitude.toFixed(5)}, ${record.longitude?.toFixed(5)} · accuracy ${record.accuracy ?? "unknown"} m`
                   : "No usable location was shared."}
               </T>
-              <T>
-                {record.callback
-                  ? `Chosen callback: ${record.callback}`
-                  : "No callback number was shared."}
-              </T>
               <T kind="caption">
-                Follow your organization’s response protocol. Acceptance is not
-                arrival. No journal or case evidence is attached.
+                Communicate in this incident chat. Acknowledgement means
+                availability; arrival is a separate check-in. No support history
+                is included.
               </T>
-              {record.callback && (
+              {["en_route", "arrived", "withdrawn", "unsafe"].map((state) => (
                 <Button
-                  title="Call chosen callback number"
+                  key={state}
+                  title={
+                    {
+                      en_route: "I am on my way",
+                      arrived: "Report arrival",
+                      withdrawn: "Withdraw from this assignment",
+                      unsafe: "I feel unsafe · withdraw",
+                    }[state]!
+                  }
                   tone="outline"
-                  onPress={() => {
-                    void Linking.openURL("tel:" + record.callback).catch(() =>
-                      setError("Could not open the dialer."),
-                    );
+                  busy={busy}
+                  onPress={async () => {
+                    if (!session) return;
+                    setBusy(true);
+                    try {
+                      const r = await accountClient(session).rpc(
+                        "vv2_responder_checkin",
+                        { p_event: id, p_state: state },
+                      );
+                      if (r.error) throw r.error;
+                      refresh();
+                    } catch (e) {
+                      setError((e as Error).message);
+                    } finally {
+                      setBusy(false);
+                    }
                   }}
                 />
-              )}
+              ))}
             </View>
+          )}
+          {record.chat_allowed && (
+            <IncidentChat key={record.id} eventId={record.id} />
           )}
         </>
       ) : (

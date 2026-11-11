@@ -3,6 +3,7 @@ import type { EvidenceItem } from "@/shared/evidence";
 export type StaffRole = "admin" | "volunteer" | "case_worker" | "none";
 export type CaseSummary = {
   id: string;
+  scope_id?: string | null;
   description: string;
   status: string;
   harassment_type: string;

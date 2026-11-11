@@ -1,4 +1,6 @@
 "use client";
+import { PurposeAccess } from "./purpose-access";
+import { workforceLabel, type WorkforceContext } from "@/lib/workforce";
 import { StaffMfa } from "@/components/staff-mfa";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -130,12 +132,16 @@ function WorkspaceSession() {
   useEffect(() => {
     if (!allowed) return;
     let active = true;
-    Promise.all([staffRole(), getSupabase().auth.getUser()])
-      .then(async ([value, user]) => {
+    Promise.all([
+      staffRole(),
+      getSupabase().auth.getUser(),
+      supportRpc<WorkforceContext>("vv2_context"),
+    ])
+      .then(async ([value, user, context]) => {
         if (!active) return;
         setRole(value);
         setIdentity(
-          `${value === "admin" ? "Supervisor" : "Support worker"} · ${user.data.user?.id.slice(0, 8) || "session"}`,
+          `${workforceLabel(context.role)} · ${user.data.user?.id.slice(0, 8) || "session"}`,
         );
         if (value === "admin") {
           const people = await getStaff();
@@ -358,14 +364,22 @@ function WorkspaceSession() {
         {teamOpen && role === "admin" ? (
           <TeamPanel staff={staff} onChanged={refresh} />
         ) : selectedId ? (
-          <CaseWorkspace
+          <CasePurpose
             key={selectedId}
             id={selectedId}
             role={role}
-            staff={staff}
-            identity={identity}
+            scopeId={rows.find((r) => r.id === selectedId)?.scope_id}
             onChanged={refresh}
-          />
+          >
+            <CaseWorkspace
+              key={selectedId}
+              id={selectedId}
+              role={role}
+              staff={staff}
+              identity={identity}
+              onChanged={refresh}
+            />
+          </CasePurpose>
         ) : (
           <section className="support-welcome">
             <div className="support-welcome-symbol">
@@ -585,7 +599,7 @@ function CaseWorkspace({
             </label>
             <p className="support-helper">
               {row.team?.map((p) => p.display_name).join(", ") ||
-                "Supervisor support only."}
+                "Area coordinator support only."}
             </p>
             <p className="support-helper">
               {row.allow_volunteer_support
@@ -731,13 +745,13 @@ function CaseWorkspace({
               </div>
             ))
           ) : (
-            <p className="support-helper">Supervisor support only.</p>
+            <p className="support-helper">Area coordinator support only.</p>
           )}
           <p className="support-consent">
             <LockKeyhole size={14} />
             {row.allow_volunteer_support
-              ? "Owner allows assigned volunteers."
-              : "Owner has not enabled volunteer support."}
+              ? "Assigned employees provide support."
+              : "Volunteers cannot access support cases."}
           </p>
           {role === "admin" && (
             <>
@@ -946,5 +960,27 @@ function TeamPanel(_props: { staff: StaffMember[]; onChanged: () => void }) {
       <p>Invite, review and supervise workers before assigning cases.</p>
       <Link href="/team">Open team controls</Link>
     </section>
+  );
+}
+
+function CasePurpose({
+  id,
+  role,
+  scopeId,
+  onChanged,
+  children,
+}: {
+  id: string;
+  role: StaffRole;
+  scopeId?: string | null;
+  onChanged: () => void;
+  children: React.ReactNode;
+}) {
+  return role === "admin" ? (
+    <PurposeAccess id={id} kind="case" scopeId={scopeId} onChanged={onChanged}>
+      {children}
+    </PurposeAccess>
+  ) : (
+    <>{children}</>
   );
 }

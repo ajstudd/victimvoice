@@ -41,6 +41,7 @@ export type Vault = {
     category: string;
     priority: string;
     volunteers: boolean;
+    scopeId?: string;
   };
   journey?: { deadline: number; destination: string };
   contacts: Contact[];

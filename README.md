@@ -42,7 +42,7 @@ Have the admin sign in with Google first, or create their Auth account through t
 insert into public.admin_users(user_id) values ('AUTH-USER-UUID');
 ```
 
-Users cannot edit this table or promote themselves. Remove that row to revoke access immediately. Supervisors can read all reports, reply, and update status; they cannot rewrite report descriptions or contact identities from the app. Do not give volunteers `admin_users` membership. The new workspace’s Team controls approve a restricted volunteer role, with separate case assignment and survivor consent.
+Users cannot edit this table or promote themselves. Remove that row to revoke access immediately. This database-only role is now the superadmin bootstrap. Area admins and employees use scoped memberships and MFA; management does not automatically grant sensitive case access. Never give volunteers `admin_users` membership. See [workforce operations](docs/WORKFORCE_OPERATIONS.md) for staff invitations, public volunteer applications, independent field approval and in-app incident chat.
 
 ## Free-tier choices and limits
 
@@ -87,3 +87,5 @@ The existing web project is `ajstudds-projects/victimvoice` on Vercel, public or
 The release upgrades the web framework to Next.js 15.5.29, removes unused spreadsheet/PDF/validation packages, refreshes safe transitive dependencies and adds required Suspense boundaries. The production dependency audit reports no critical or high findings. Three moderate advisories remain in the CSS/build toolchain; development lint tooling also has moderate transitive advisories. Runtime authorization continues to be enforced by Supabase roles/policies.
 
 Android 1.2.1/code 5 is the publishable internal preview, with regenerated native runtime metadata and the same signing certificate. Native SMS requires installing the release APK over the current app without uninstalling. The Expo preview OTA must match that APK's packaged fingerprint; older runtimes retain their compatible updates. No Play Store release is configured. Push still requires Firebase client configuration, matching Expo FCM credentials, another native build, and approved receiving teams. Police regions are configured pilot scopes, not live agency coverage.
+
+Apply `supabase/scoped-workforce.sql` after the existing safety-governance / responder-contact-privacy setup. It is additive and repeatable, preserves existing cases and accounts, and retires the legacy one-step volunteer invitation/approval endpoints. Update the website and mobile clients together.

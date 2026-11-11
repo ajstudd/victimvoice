@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import {
   View,
   Image,
@@ -16,8 +22,13 @@ import { fetch as expoFetch } from "expo/fetch";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { Button, Field, Notice, T, Row, Icon, s, colors } from "./ui";
-import { supabase, cloudError } from "../lib/supabase";
+import { useApp } from "../state/AppState";
+import { useConversationSync } from "../hooks/useConversationSync";
+import { supabase, accountClient, cloudError } from "../lib/supabase";
 import {
+  evidenceRpc,
+  evidenceBucket,
+  type EvidenceContext,
   addEvidenceLink,
   listEvidence,
   uploadEvidence,
@@ -40,13 +51,22 @@ const digest = async (bytes: ArrayBuffer) =>
 type Preview = { item: EvidenceItem; uri?: string; link?: string };
 export function CaseEvidence({
   requestId,
+  context = "case",
+  participantIds,
   mode = "library",
   onShared,
 }: {
   requestId: string;
+  context?: EvidenceContext;
+  participantIds?: string[];
   mode?: "library" | "chat" | "compose";
   onShared?: () => void;
 }) {
+  const { session: authSession } = useApp();
+  const client = useMemo(
+    () => (authSession ? accountClient(authSession) : supabase),
+    [authSession],
+  );
   const [items, setItems] = useState<EvidenceItem[]>([]);
   const [label, setLabel] = useState("");
   const [link, setLink] = useState("");
@@ -69,14 +89,28 @@ export function CaseEvidence({
     objectUrl.current = null;
     setPreview(null);
   }, []);
-  const refresh = useCallback(async () => {
-    try {
-      setItems(await listEvidence(supabase, requestId));
-      setError("");
-    } catch (e) {
-      setError(cloudError(e));
-    }
-  }, [requestId]);
+  const loadEvidence = useCallback(
+    async (signal: AbortSignal) =>
+      listEvidence(client, requestId, signal, context),
+    [client, requestId, context],
+  );
+  const receiveEvidence = useCallback((value: EvidenceItem[]) => {
+    setItems(value);
+    setError("");
+  }, []);
+  const failEvidence = useCallback(
+    (cause: unknown) => {
+      setItems([]);
+      close();
+      setError(cloudError(cause));
+    },
+    [close],
+  );
+  const refresh = useConversationSync(
+    loadEvidence,
+    receiveEvidence,
+    failEvidence,
+  );
   useFocusEffect(
     useCallback(() => {
       void refresh();
@@ -129,16 +163,26 @@ export function CaseEvidence({
             ? await selected.file!.arrayBuffer()
             : await new File(selected.uri).arrayBuffer();
         await uploadEvidence(
-          supabase,
+          client,
           requestId,
           name,
           mime,
           bytes,
           await digest(bytes),
+          context,
+          participantIds,
         );
         if (picked.current?.exists) picked.current.delete();
         picked.current = null;
-      } else await addEvidenceLink(supabase, requestId, name, link.trim());
+      } else
+        await addEvidenceLink(
+          client,
+          requestId,
+          name,
+          link.trim(),
+          context,
+          participantIds,
+        );
       setSelected(null);
       setLink("");
       setLabel("");
@@ -157,7 +201,7 @@ export function CaseEvidence({
     setBusy(true);
     setError("");
     try {
-      const result = await supabase.rpc("vv_open_evidence", {
+      const result = await client.rpc(evidenceRpc("open", context), {
         p_evidence_id: item.id,
       });
       if (result.error) throw result.error;
@@ -167,11 +211,10 @@ export function CaseEvidence({
         setPreview({ item, link: publicEvidenceLink(opened.url) });
         return;
       }
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      const token = authSession?.access_token;
       if (!token) throw new Error("Please sign in again.");
       const response = await expoFetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/authenticated/case-evidence/${opened.storage_path}`,
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/authenticated/${evidenceBucket(context)}/${opened.storage_path}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -218,8 +261,8 @@ export function CaseEvidence({
     if (!preview) return;
     let active = true;
     const timer = setInterval(() => {
-      void supabase
-        .rpc("vv_open_evidence", { p_evidence_id: preview.item.id })
+      void client
+        .rpc(evidenceRpc("open", context), { p_evidence_id: preview.item.id })
         .then(({ error }) => {
           if (active && error) {
             close();
@@ -231,7 +274,7 @@ export function CaseEvidence({
       active = false;
       clearInterval(timer);
     };
-  }, [preview, close]);
+  }, [preview, close, context, client]);
   const linkLabel = () => {
     try {
       return new URL(link.trim()).hostname;
@@ -418,7 +461,11 @@ export function CaseEvidence({
           )}
           {(selected || linkMode) && (
             <Button
-              title="Share with support team"
+              title={
+                context === "incident"
+                  ? "Share with current incident team"
+                  : "Share with support team"
+              }
               disabled={!ready}
               busy={busy}
               onPress={() =>
@@ -427,8 +474,9 @@ export function CaseEvidence({
             />
           )}
           <T kind="caption">
-            Up to 10 MB each. Supervisors can review what you share. You choose each assigned worker’s access in Who can see.
-            Each view is recorded. Shared files can’t be changed afterwards.
+            {context === "incident"
+              ? "Up to 5 MiB each. Shared with the current named participants only. Incident files are temporary; use a separate support conversation for ongoing help."
+              : "Up to 10 MB each. Choose who can open your evidence in Your support team. Each view is recorded. Submitted files cannot be changed."}
           </T>
         </View>
       )}

@@ -252,8 +252,8 @@ function SettingsContent() {
           onPress={() => router.push("/sos-setup")}
         />
         <Row
-          title="Join the support team"
-          subtitle="Invited staff and partner volunteers: enrollment and assignments"
+          title="Staff workspace"
+          subtitle="Staff invitations and assigned support conversations"
           icon="users"
           onPress={() =>
             void run(() =>
@@ -262,8 +262,8 @@ function SettingsContent() {
           }
         />
         <Row
-          title="Emergency responder"
-          subtitle="Invited responders: manage duty and authorized requests"
+          title="Offer support"
+          subtitle="Apply as a local volunteer or manage your responder duty"
           icon="users"
           onPress={() => router.push("/responder")}
         />

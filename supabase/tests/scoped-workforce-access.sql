@@ -1,0 +1,197 @@
+-- Fictional accounts only. No Edge calls, SMS, push or real GPS transmission.
+begin;
+create function public.qa_assert(ok boolean,msg text) returns void language plpgsql as $$begin if ok is distinct from true then raise exception 'ASSERTION: %',msg;end if;end$$;
+create function public.qa_denied(q text) returns void language plpgsql as $$begin begin execute q;exception when others then return;end;raise exception 'Expected denial: %',q;end$$;
+insert into auth.users(id,email,email_confirmed_at) select ('00000000-0000-0000-0000-'||lpad(n::text,12,'0'))::uuid,'scoped-'||n||'@example.test',now() from generate_series(101,110) n;
+-- 101 owner, 102 root, 103 MP admin, 104 Odisha admin, 105 MP employee,
+-- 106 Odisha employee, 107 Bhopal volunteer, 108 outsider, 109 Tripura applicant, 110 future staff.
+insert into public.admin_users values('00000000-0000-0000-0000-000000000102');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000102',true);
+select set_config('request.jwt.claims','{"aal":"aal1"}',true);
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000103','admin','madhya_pradesh','MP admin','Test org','review-123',true)$q$);
+select set_config('request.jwt.claims','{"aal":"aal2"}',true);
+select public.vv2_invite_staff('00000000-0000-0000-0000-000000000103','admin','madhya_pradesh','MP admin','Test org','review-123',true) mp_token \gset
+select public.vv2_invite_staff('00000000-0000-0000-0000-000000000104','admin','odisha','Odisha admin','Test org','review-124',true) od_token \gset
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000105','employee','bhopal','Employee','Test org','review-125',true)$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000108',true);
+select public.qa_denied(format('select public.vv2_accept_staff(%L)',:'mp_token'));
+select public.qa_denied($q$insert into public.admin_users values('00000000-0000-0000-0000-000000000108')$q$);
+select public.qa_denied($q$select public.vv2_log('forged_audit')$q$);
+select public.qa_denied($q$select * from public.vv_staff_invites$q$);
+select public.qa_denied($q$select * from public.vv_governance_audit$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000103',true);
+select public.vv2_accept_staff(:'mp_token');
+select public.qa_denied(format('select public.vv2_accept_staff(%L)',:'mp_token'));
+select public.qa_denied($q$select public.vv2_create_scope('Self expansion','region','india')$q$);
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000105','admin','bhopal','Higher role','Test org','review-125',true)$q$);
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000105','employee','india','Broad role','Test org','review-125',true)$q$);
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000105','employee','odisha','Wrong area','Test org','review-125',true)$q$);
+select public.vv2_invite_staff('00000000-0000-0000-0000-000000000105','employee','bhopal','MP employee','Test org','review-125',true) emp_token \gset
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000104',true);
+select public.vv2_accept_staff(:'od_token');
+select public.vv2_invite_staff('00000000-0000-0000-0000-000000000106','employee','bhubaneswar','Odisha employee','Test org','review-126',true) od_emp_token \gset
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000106',true);
+select public.vv2_accept_staff(:'od_emp_token');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.vv2_accept_staff(:'emp_token');
+select public.vv2_staff_availability(true);
+select public.qa_assert(public.vv_staff_role()='case_worker','Employee routes to support');
+select public.qa_denied($q$select public.vv2_invite_staff('00000000-0000-0000-0000-000000000110','employee','bhopal','Unauthorized','Test org','review-xxx',true)$q$);
+-- Public application is allowed at AAL1, with zero case/incident access.
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select set_config('request.jwt.claims','{"aal":"aal1","user_metadata":{"role":"admin"}}',true);
+select public.vv2_apply_volunteer('bhopal','Fictional volunteer','Test group','Hindi','First aid','Weekends in Bhopal',true);
+select public.qa_assert(public.vv_staff_role()='none','Applicant metadata cannot grant support role');
+select public.qa_denied($q$select public.vv2_console()$q$);
+select public.qa_denied($q$select public.vv2_review_volunteer('00000000-0000-0000-0000-000000000107','approved','{}','self-review','Trying self approval')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000109',true);
+select public.vv2_apply_volunteer('tripura','Tripura applicant','','Bengali','Listening','Weekends in Tripura',true);
+select set_config('request.jwt.claims','{"aal":"aal2"}',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.qa_denied($q$select public.vv2_claim_volunteer_review('00000000-0000-0000-0000-000000000109',true)$q$);
+select public.qa_assert(jsonb_array_length(public.vv2_console()->'applications')=1,'Employee sees only local application metadata');
+select public.vv2_claim_volunteer_review('00000000-0000-0000-0000-000000000107',true);
+select public.qa_denied($q$select public.vv2_review_volunteer('00000000-0000-0000-0000-000000000107','approved','{}','review-1','Incomplete human checks')$q$);
+select public.vv2_review_volunteer('00000000-0000-0000-0000-000000000107','approved','{"identity":true,"contact":true,"references":true,"interview":true,"training":true,"confidentiality":true,"local_area":true}','review-record-127','Checks and training completed with supervised response plan');
+select public.qa_denied($q$select public.vv2_approve_field_response('00000000-0000-0000-0000-000000000107',true,'Cannot approve my own review')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000104',true);
+select public.qa_denied($q$select public.vv2_approve_field_response('00000000-0000-0000-0000-000000000107',true,'Wrong area admin cannot approve')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000103',true);
+select public.vv2_field_review('00000000-0000-0000-0000-000000000107');
+select public.vv2_approve_field_response('00000000-0000-0000-0000-000000000107',true,'Independent approval with buddy response plan');
+-- Case queue metadata is scoped. Actual contents require purpose / accepted assignment.
+reset role;
+insert into public.support_requests(id,user_id,user_address,accused_name,accused_address,harassment_type,severity_level,description,scope_id) values
+('10000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000101','private','private','private','other','high','Fictional private description','bhopal'),
+('10000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000101','private','private','private','other','high','Other area secret','bhubaneswar');
+insert into public.vv_case_evidence(id,request_id,uploader_id,kind,label,url,ready) values('20000000-0000-0000-0000-000000000101','10000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000101','link','Private link','https://example.test/private',true);
+set local role authenticated;
+select public.qa_assert(jsonb_array_length(public.vv_list_cases())=1,'MP admin only sees MP case metadata');
+select public.qa_assert(public.vv_list_cases()->0->>'description' not like '%Fictional%','No private description before purpose');
+select public.qa_assert(not exists(select 1 from public.support_requests),'Admin cannot bypass purpose via raw table');
+select public.qa_denied($q$select public.vv_open_case('10000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv2_purpose_access('10000000-0000-0000-0000-000000000102','case','Attempted cross-area purpose access')$q$);
+select public.vv2_purpose_access('10000000-0000-0000-0000-000000000101','case','Triage case and assign a trained local employee');
+select public.qa_assert(public.vv_open_case('10000000-0000-0000-0000-000000000101')->>'description'='Fictional private description','Purpose grants content temporarily');
+select public.qa_denied($q$select public.vv_open_evidence('20000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv_assign_case('10000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000107')$q$);
+select public.qa_denied($q$select public.vv_assign_case('10000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000106')$q$);
+select public.vv_assign_case('10000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000105');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.qa_denied($q$select public.vv_open_case('10000000-0000-0000-0000-000000000101')$q$);
+select public.vv_accept_case('10000000-0000-0000-0000-000000000101',true);
+select public.qa_assert(public.vv_can_work_case('10000000-0000-0000-0000-000000000101'),'Employee accepted case');
+select public.qa_assert(not exists(select 1 from public.support_requests),'Employee cannot read raw contact identities');
+select public.qa_denied($q$select public.vv_open_evidence('20000000-0000-0000-0000-000000000101')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+select public.vv_set_evidence_grant('20000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000105',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.qa_assert(public.vv_open_evidence('20000000-0000-0000-0000-000000000101')->>'url'='https://example.test/private','Owner-selected file accessible');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select public.qa_denied($q$select public.vv_open_case('10000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv_open_evidence('20000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv_create_worker_invite('00000000-0000-0000-0000-000000000108','support_volunteer','bhopal')$q$);
+-- Suspend the sponsoring admin: current JWT employee/file and volunteer approval all fail closed.
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000102',true);
+select public.vv2_set_staff_access('00000000-0000-0000-0000-000000000103','madhya_pradesh',false,'Suspension pending accountable conduct review');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.qa_assert(not public.vv_can_work_case('10000000-0000-0000-0000-000000000101'),'Sponsor suspension immediately removes employee access');
+select public.qa_denied($q$select public.vv_open_evidence('20000000-0000-0000-0000-000000000101')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select public.qa_assert(public.vv_sos_role()='pending','Suspended approval chain removes field eligibility');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000102',true);
+select public.vv2_set_staff_access('00000000-0000-0000-0000-000000000103','madhya_pradesh',true,'Independent review restored current admin membership');
+-- SOS offered context stays coarse until independent coordinator dispatch.
+reset role;
+do $qa_geometry$ declare g text;begin
+ select n.nspname into g from pg_extension e join pg_namespace n on n.oid=e.extnamespace where e.extname='postgis';
+ execute replace($qa_geo$update public.vv_sos_regions set volunteer_enabled=true,boundary_source='https://example.test/fictional-area',verified_at=now(),boundary=(select extensions.st_multi(extensions.st_geomfromtext('POLYGON((77 23,78 23,78 24,77 24,77 23))',4326))::extensions.geography) where id='bhopal';
+insert into public.vv_sos_events(id,user_id,alias,callback,region_id,relay,volunteers,police,position) values('30000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000101','Fictional owner','+919876543210','bhopal',false,true,false,extensions.st_setsrid(extensions.st_makepoint(77.4,23.2),4326)::extensions.geography);$qa_geo$,'extensions.',quote_ident(g)||'.');
+end $qa_geometry$;
+insert into public.vv_sos_offers(event_id,responder_id) values('30000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000107');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select public.vv_sos_duty(true,23.2,77.4);
+select public.qa_assert(not (public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'details_allowed')::boolean,'Offered responder cannot see location');
+select public.qa_denied($q$select public.vv2_incident_messages('30000000-0000-0000-0000-000000000101')$q$);
+select public.vv_sos_accept('30000000-0000-0000-0000-000000000101');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'latitude' is null,'Acknowledgement is not location access');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'callback' is null,'Acknowledgement never exposes phone');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000104',true);
+select public.qa_assert(jsonb_array_length(public.vv_sos_list())=0,'Other area admin cannot list incident');
+select public.qa_denied($q$select public.vv_sos_read('30000000-0000-0000-0000-000000000101')$q$);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000103',true);
+select public.qa_assert(not (public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'details_allowed')::boolean,'Local admin needs purpose before precise context');
+select public.qa_denied($q$select public.vv_dispatch_responder('30000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000107',true)$q$);
+select public.vv2_purpose_access('30000000-0000-0000-0000-000000000101','incident','Coordinate safe response with reviewed buddy team');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'latitude' is not null,'Purpose permits local coordinator location');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'callback' is null,'Even coordinator cannot access callback');
+select public.vv_dispatch_responder('30000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000107',true);
+select public.vv2_add_evidence_link('30000000-0000-0000-0000-000000000101','Only current team','https://example.test/incident',array['00000000-0000-0000-0000-000000000107'::uuid]);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select public.qa_assert((public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'details_allowed')::boolean,'Dispatch releases precise context temporarily');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'callback' is null,'Dispatched volunteer never sees phone');
+select public.qa_assert(jsonb_array_length(public.vv2_list_evidence('30000000-0000-0000-0000-000000000101'))=1,'Explicit named media participant can see attachment');
+select public.vv2_send_incident_message('30000000-0000-0000-0000-000000000101','40000000-0000-0000-0000-000000000101','I am the assigned volunteer. What help would you like?');
+select public.vv2_send_incident_message('30000000-0000-0000-0000-000000000101','40000000-0000-0000-0000-000000000101','I am the assigned volunteer. What help would you like?');
+select public.qa_assert(jsonb_array_length(public.vv2_incident_messages('30000000-0000-0000-0000-000000000101'))=1,'Message retry idempotency');
+select public.qa_denied($q$select public.vv2_send_incident_message('30000000-0000-0000-0000-000000000101','40000000-0000-0000-0000-000000000102','Call my personal number +919876543210')$q$);
+select public.qa_denied($q$select * from public.vv_incident_messages$q$);
+select public.qa_denied($q$select * from public.vv_incident_evidence_grants$q$);
+select public.vv2_responder_checkin('30000000-0000-0000-0000-000000000101','arrived');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'callback' is null,'Reported arrival does not change contact privacy');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+select public.vv2_send_incident_message('30000000-0000-0000-0000-000000000101','40000000-0000-0000-0000-000000000103','Please stay with me while I wait for my family.');
+select public.qa_assert(jsonb_array_length(public.vv2_incident_messages('30000000-0000-0000-0000-000000000101'))=2,'Owner and volunteer can converse without phone disclosure');
+select public.qa_assert(public.vv_sos_read('30000000-0000-0000-0000-000000000101')->>'callback'='+919876543210','Owner still sees own chosen contact');
+-- Private incident Storage requires both a snapshot grant and an audited short lease.
+select set_config('qa.file',public.vv2_reserve_evidence('30000000-0000-0000-0000-000000000101','Fictional image','image/png',32,repeat('a',64),array['00000000-0000-0000-0000-000000000107'::uuid])::text,true);
+insert into storage.objects(bucket_id,name,metadata) values('incident-evidence',current_setting('qa.file')::jsonb->>'storage_path','{"size":32,"mimetype":"image/png"}');
+select public.vv2_finish_evidence((current_setting('qa.file')::jsonb->>'id')::uuid);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select set_config('storage.operation','object.get_authenticated',true);
+select public.qa_assert(not exists(select 1 from storage.objects where bucket_id='incident-evidence'),'Cannot bypass audited open through Storage');
+select public.vv2_open_evidence((current_setting('qa.file')::jsonb->>'id')::uuid);
+select public.qa_assert(exists(select 1 from storage.objects where bucket_id='incident-evidence'),'Current named participant can download through a short lease');
+select set_config('storage.operation','object.sign',true);
+select public.qa_assert(not exists(select 1 from storage.objects where bucket_id='incident-evidence'),'No permanent signed media URL');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000102',true);
+select public.vv2_purpose_access('30000000-0000-0000-0000-000000000101','incident','New independent coordinator taking over this incident');
+select public.qa_assert(jsonb_array_length(public.vv2_list_evidence('30000000-0000-0000-0000-000000000101'))=0,'New coordinator does not inherit earlier attachments');
+select public.qa_denied(format('select public.vv2_open_evidence(%L)',current_setting('qa.file')::jsonb->>'id'));
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+select public.vv_report_worker('00000000-0000-0000-0000-000000000107','Fictional report: requested off-platform contact',null,'30000000-0000-0000-0000-000000000101');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000107',true);
+select public.qa_denied($q$select public.vv_sos_read('30000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv2_incident_messages('30000000-0000-0000-0000-000000000101')$q$);
+select public.qa_denied($q$select public.vv2_list_evidence('30000000-0000-0000-0000-000000000101')$q$);
+select set_config('storage.operation','object.get_authenticated',true);
+select public.qa_assert(not exists(select 1 from storage.objects where bucket_id='incident-evidence'),'Owner report revokes existing media lease immediately');
+-- An allegation removes this owner's access only, not an automatic platform-wide ban.
+select public.qa_assert(public.vv_sos_role()='volunteer','One unreviewed report does not establish a global ban');
+select public.vv2_responder_checkin('30000000-0000-0000-0000-000000000101','withdrawn');
+select public.vv2_helper_report('30000000-0000-0000-0000-000000000101','Fictional unsafe assignment report for coordinator');
+-- Complained-about staff cannot resolve their own report.
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+select public.vv_report_worker('00000000-0000-0000-0000-000000000103','Fictional coordinator complaint for independent review','10000000-0000-0000-0000-000000000101',null);
+reset role;
+select set_config('qa.self_report',(select id::text from public.vv_safety_reports where worker_id='00000000-0000-0000-0000-000000000103' limit 1),true);
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000103',true);
+select public.qa_denied(format('select public.vv_review_report(%L,%L,%L)',current_setting('qa.self_report'),'closed','Attempt to close my own complaint'));
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000102',true);
+select public.vv_review_report(current_setting('qa.self_report')::uuid,'reviewing','Independent superadmin is investigating the complaint');
+-- Scope/role/evidence expiry is effective against a still-valid old JWT.
+reset role;
+update public.vv_staff_memberships set expires_at=now()-interval '1 second' where user_id='00000000-0000-0000-0000-000000000105';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000105',true);
+select public.qa_assert(not public.vv_can_work_case('10000000-0000-0000-0000-000000000101'),'Expired employee immediately loses case');
+select public.qa_denied($q$select public.vv_open_evidence('20000000-0000-0000-0000-000000000101')$q$);
+reset role;
+select public.qa_assert(exists(select 1 from public.vv_governance_audit where action='volunteer_approved' and actor_id='00000000-0000-0000-0000-000000000105'),'Attributable employee review retained');
+select public.qa_assert(exists(select 1 from public.vv_governance_audit where action='field_response_approved' and actor_id='00000000-0000-0000-0000-000000000103'),'Independent admin approval retained');
+select public.qa_assert(not has_table_privilege('authenticated','public.admin_users','INSERT'),'No public superadmin provisioning');
+select 'Scoped hierarchy, case privacy, independent review, incident chat and blocking checks passed' as result;
+rollback;

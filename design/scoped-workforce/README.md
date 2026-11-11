@@ -1,0 +1,1 @@
+Fictional local UI verification, 11 November 2026. These screenshots use loopback-only fixtures and invented accounts. They show public volunteer submission and scoped employee review; they do not show real volunteers, real approvals, live emergency coverage or delivered notifications.

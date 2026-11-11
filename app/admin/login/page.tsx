@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
           Continue with Google
         </Button>
         <p className="mb-4 text-sm text-muted-foreground">
-          Or use your admin email and password.
+          Or sign in with your staff email and password.
         </p>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">

@@ -1,6 +1,6 @@
 # Scoped workforce and safe response model
 
-Product direction supplied by the owner on 10 November 2026. This supersedes the earlier invitation-only volunteer recruitment model. This is the revised target architecture, not a claim that the full hierarchy is already implemented.
+Product direction supplied by the owner on 10 November 2026. This supersedes the earlier invitation-only volunteer recruitment model. The scoped software implementation and operating steps are documented in [WORKFORCE_OPERATIONS.md](WORKFORCE_OPERATIONS.md). Physical push delivery, staffed coverage and real human verification remain operational rollout requirements.
 
 ## Hierarchy and authority
 

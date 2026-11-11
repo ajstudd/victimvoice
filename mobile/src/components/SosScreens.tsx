@@ -1,4 +1,5 @@
 import { PrivateGate } from "./PrivateGate";
+import { IncidentChat } from "./IncidentChat";
 import { CaseTeam } from "./CaseTeam";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Switch, Platform, Linking, AppState } from "react-native";
@@ -189,7 +190,7 @@ function SosSetupContent() {
       ))}
       <Row
         title="Nearby emergency volunteers"
-        subtitle="Only approved responders who are available in your area can receive a request. Your precise location is shared only after a supervisor assigns them."
+        subtitle="Only approved responders who are available in your area can receive a request. Your precise location is shared only after an area coordinator assigns them."
         end={
           <Switch
             accessibilityLabel="Allow nearby responder offers"
@@ -398,6 +399,9 @@ export function ActiveSos() {
             </View>
           )}
           {event.cloudCreated && <CaseTeam eventId={event.id} />}
+          {cloud?.chat_allowed && (
+            <IncidentChat key={event.id} eventId={event.id} owner />
+          )}
           {event.closePending && (
             <Notice text="Closed on this device. Server cancellation is queued and has not yet been confirmed." />
           )}

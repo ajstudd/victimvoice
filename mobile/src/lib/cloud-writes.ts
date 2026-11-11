@@ -18,6 +18,7 @@ export function insertSupportRequest(
     severity_level: string;
     harassment_type: string;
     allow_volunteer_support: boolean;
+    scope_id?: string | null;
   },
 ) {
   return client.from("support_requests").insert(values).select("id").single();
