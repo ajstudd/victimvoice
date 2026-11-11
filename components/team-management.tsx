@@ -215,6 +215,28 @@ function Console({
   }
   const role = context?.role,
     manager = role === "superadmin" || role === "admin";
+  if (!context || !canManagePersonnel(context.role))
+    return (
+      <section className="tm-panel" style={{ padding: 24 }}>
+        <p className="tm-loading" role="status">
+          Opening personnel management…
+        </p>
+        {error && (
+          <p className="tm-alert" role="alert">
+            {error}
+          </p>
+        )}
+        {error && (
+          <button
+            className="tm-button"
+            disabled={busy}
+            onClick={() => void run(load)}
+          >
+            Try again
+          </button>
+        )}
+      </section>
+    );
   return (
     <>
       <Dialog
@@ -255,21 +277,13 @@ function Console({
       <div className="tm-page-heading">
         <div>
           <span className="tm-eyebrow">PEOPLE & RESPONSIBILITY</span>
-          <h1>
-            {role === "employee"
-              ? "Your support desk"
-              : manager
-                ? "Team & access"
-                : "Join your team"}
-          </h1>
+          <h1>{role === "employee" ? "Your support desk" : "Team & access"}</h1>
           <p>
             {role === "superadmin"
               ? "Appoint accountable area admins and review access."
               : role === "admin"
                 ? "Build your local employee team and oversee safe response."
-                : role === "employee"
-                  ? "Support assigned conversations and review local volunteer applications."
-                  : "Accept a staff invitation here. Volunteer applications are available in the app."}
+                : "Support assigned conversations and review local volunteer applications."}
           </p>
         </div>
         <button
