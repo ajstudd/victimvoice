@@ -13,6 +13,11 @@ import {
   signOut,
 } from "@/lib/supabase";
 import { staffLanding } from "@/lib/support";
+import {
+  authenticatedLoginDestination,
+  consumeLoginDestination,
+  rememberLoginDestination,
+} from "@/lib/staff-routing";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -31,7 +36,12 @@ export default function AdminLoginPage() {
         password,
       });
       if (error) throw error;
-      const destination = await staffLanding();
+      const requested = consumeLoginDestination(window.location.search);
+      const destination = authenticatedLoginDestination(
+        requested,
+        true,
+        requested === "/join" ? null : await staffLanding(),
+      );
       if (!destination) {
         await signOut();
         throw new Error(
@@ -53,6 +63,7 @@ export default function AdminLoginPage() {
     setBusy(true);
     setError("");
     try {
+      rememberLoginDestination();
       await signInWithGoogle(true);
     } catch {
       setError("Google sign-in could not start. Please try again.");
@@ -71,8 +82,8 @@ export default function AdminLoginPage() {
 
         <h1 className="text-2xl font-bold text-center mb-2">Staff sign-in</h1>
         <p className="text-center text-muted-foreground mb-8">
-          For supervisors and separately approved support or emergency
-          responders
+          Use your staff account. Access follows your role, service area and
+          assignments.
         </p>
 
         {!isSupabaseConfigured && (
@@ -90,7 +101,7 @@ export default function AdminLoginPage() {
         <p className="mb-4 text-sm text-muted-foreground">
           Or sign in with your staff email and password.
         </p>
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form method="post" onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
               Email
@@ -134,6 +145,12 @@ export default function AdminLoginPage() {
           </p>
         )}
         <div className="mt-6 text-center">
+          <Link
+            href="/join"
+            className="block mb-4 text-sm text-primary hover:underline"
+          >
+            Have a staff invitation? Accept it here.
+          </Link>
           <Link href="/" className="text-sm text-primary hover:underline">
             Return to home page
           </Link>

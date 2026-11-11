@@ -108,7 +108,6 @@ function WorkspaceSession() {
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [teamOpen, setTeamOpen] = useState(false);
   const [privateView, setPrivateView] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -181,14 +180,13 @@ function WorkspaceSession() {
   }, [allowed, page, status, term, revision]);
   const refresh = useCallback(() => setRevision((v) => v + 1), []);
   const select = (id: string) => {
-    setTeamOpen(false);
     router.replace(`/admin/dashboard?id=${encodeURIComponent(id)}`);
   };
   if (!allowed) return null;
   return (
     <main className="support-app">
       <header className="support-topbar">
-        <Link className="support-brand" href="/">
+        <Link className="support-brand" href="/admin">
           <span>
             <Shield size={20} />
           </span>
@@ -202,12 +200,17 @@ function WorkspaceSession() {
             {identity}
           </span>
           {role === "admin" && (
-            <button
-              className="support-secondary-button"
-              onClick={() => setTeamOpen(!teamOpen)}
-            >
-              <UserRoundPlus size={16} /> Team
-            </button>
+            <>
+              <Link
+                className="support-secondary-button"
+                href="/admin/emergency"
+              >
+                Emergency desk
+              </Link>
+              <Link className="support-secondary-button" href="/admin/team">
+                <UserRoundPlus size={16} /> Team & access
+              </Link>
+            </>
           )}
           <button
             className="support-icon-button"
@@ -237,7 +240,7 @@ function WorkspaceSession() {
                 {role !== "admin" ? "Assigned to you" : "Case queue"}
               </p>
               <h1>Support inbox</h1>
-              <Link href="/team">
+              <Link href="/admin/team">
                 Team & assignments{" "}
                 {pendingAssignments > 0
                   ? `· ${pendingAssignments} to acknowledge`
@@ -361,9 +364,7 @@ function WorkspaceSession() {
             <Shield size={14} /> No bulk exports. Case access is scoped.
           </p>
         </aside>
-        {teamOpen && role === "admin" ? (
-          <TeamPanel staff={staff} onChanged={refresh} />
-        ) : selectedId ? (
+        {selectedId ? (
           <CasePurpose
             key={selectedId}
             id={selectedId}
@@ -953,16 +954,6 @@ function CaseActivityPanel({
     </section>
   );
 }
-function TeamPanel(_props: { staff: StaffMember[]; onChanged: () => void }) {
-  return (
-    <section className="support-team-panel">
-      <h2>Team enrollment</h2>
-      <p>Invite, review and supervise workers before assigning cases.</p>
-      <Link href="/team">Open team controls</Link>
-    </section>
-  );
-}
-
 function CasePurpose({
   id,
   role,

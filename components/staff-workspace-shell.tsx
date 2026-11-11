@@ -15,15 +15,19 @@ export function StaffWorkspaceShell({
   children,
   active,
   role,
+  contentClassName = "",
+  mode = "staff",
 }: {
   children: ReactNode;
   active: "emergency" | "team";
   role: string;
+  contentClassName?: string;
+  mode?: "staff" | "support" | "responder";
 }) {
   return (
     <div className="tm-shell">
       <aside className="tm-sidebar">
-        <Link className="tm-brand" href="/">
+        <Link className="tm-brand" href="/admin">
           <span>
             <Shield size={23} />
           </span>
@@ -33,25 +37,32 @@ export function StaffWorkspaceShell({
         </Link>
         <p className="tm-nav-caption">WORKSPACE</p>
         <nav aria-label="Workspace">
-          <Link href="/admin/dashboard">
-            <Inbox size={18} />
-            Support inbox
-          </Link>
-          <Link
-            href="/admin/emergency"
-            aria-current={active === "emergency" ? "page" : undefined}
-          >
-            <Radio size={18} />
-            Emergency desk
-            {active === "emergency" && <span className="tm-nav-dot" />}
-          </Link>
-          <Link
-            href="/team"
-            aria-current={active === "team" ? "page" : undefined}
-          >
-            <Users size={18} />
-            Team & access{active === "team" && <span className="tm-nav-dot" />}
-          </Link>
+          {mode !== "responder" && (
+            <Link href="/admin/dashboard">
+              <Inbox size={18} />
+              Support inbox
+            </Link>
+          )}
+          {mode !== "support" && (
+            <Link
+              href="/admin/emergency"
+              aria-current={active === "emergency" ? "page" : undefined}
+            >
+              <Radio size={18} />
+              Emergency desk
+              {active === "emergency" && <span className="tm-nav-dot" />}
+            </Link>
+          )}
+          {mode !== "responder" && (
+            <Link
+              href="/admin/team"
+              aria-current={active === "team" ? "page" : undefined}
+            >
+              <Users size={18} />
+              Team & access
+              {active === "team" && <span className="tm-nav-dot" />}
+            </Link>
+          )}
         </nav>
         <div className="tm-sidebar-bottom">
           <div className="tm-sidebar-note">
@@ -71,9 +82,11 @@ export function StaffWorkspaceShell({
             {active === "emergency" ? "Emergency desk" : "Team & access"}
           </span>
           <div>
-            <Link className="ed-team-link" href="/team">
-              Team & access <ArrowUpRight size={13} />
-            </Link>
+            {active !== "team" && mode !== "responder" && (
+              <Link className="ed-team-link" href="/admin/team">
+                Team & access <ArrowUpRight size={13} />
+              </Link>
+            )}
             <span className="tm-role">
               <Shield size={13} />
               {role}
@@ -87,7 +100,7 @@ export function StaffWorkspaceShell({
             </button>
           </div>
         </header>
-        <main className="tm-content">{children}</main>
+        <main className={`tm-content ${contentClassName}`}>{children}</main>
       </div>
     </div>
   );

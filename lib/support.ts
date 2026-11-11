@@ -1,3 +1,5 @@
+import { staffHomeForRole } from "./staff-routing";
+import type { WorkforceContext } from "./workforce";
 import { getSupabase } from "./supabase";
 import type { EvidenceItem } from "@/shared/evidence";
 export type StaffRole = "admin" | "volunteer" | "case_worker" | "none";
@@ -88,11 +90,9 @@ export const reviewEvidence = (
 ) => supportRpc("vv_review_evidence", { p_evidence_id: id, p_status: status });
 
 export async function staffLanding(): Promise<string | null> {
-  const role = await staffRole();
-  if (role !== "none") return "/admin/dashboard";
-  const emergency = await getSupabase().rpc("vv_sos_role");
-  return !emergency.error &&
-    ["admin", "volunteer", "police"].includes(emergency.data)
-    ? "/admin/emergency"
-    : null;
+  const context = await supportRpc<WorkforceContext>("vv2_context");
+  let responderRole: string | null = null;
+  if (context.role === "volunteer")
+    responderRole = await supportRpc<string | null>("vv_sos_role");
+  return staffHomeForRole(context.role, responderRole);
 }

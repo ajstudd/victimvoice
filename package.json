@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:db": "bash scripts/test-db.sh"
+    "test:db": "bash scripts/test-db.sh",
+    "test:routing": "node --experimental-strip-types --test tests/staff-routing.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",

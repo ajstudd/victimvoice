@@ -2,18 +2,26 @@
 
 Implemented scoped model, November 2026. The database-only `admin_users` table is the superadmin bootstrap. No public form, invitation or editable Auth metadata creates a superadmin. Existing global supervisors retain this bootstrap role; legacy invited workers are not silently promoted.
 
+## Staff routes
+
+`/admin` checks the signed-in account and opens `/admin/team` for superadmins/area admins, `/admin/dashboard` for employees, and `/admin/emergency` for approved responders. Signed-out visitors go to staff sign-in; accounts without staff/responding privileges go to `/join`. Backend authorization still controls every operation.
+
+`/admin/team` contains personnel/access management and the employee volunteer-review/assignment workspace. `/join` handles signed-in account references, MFA and accepting staff invitations; it has no personnel directory, review queue or management controls. Existing staff can also accept renewed/additional-scope invitations there. Google, password and phone sign-in preserve the invitation destination through an exact allowlist.
+
+`/team` is a compatibility entry for older bookmarks and installed app links: staff management roles go to `/admin/team`, and everyone else goes to `/join`. It uses the browser's authenticated session because the existing web Auth session lives in browser storage. There is no second backend or role grant at this URL.
+
 ## Appoint an area admin
 
-1. The person signs in on the website, opens `/team`, and sets up their authenticator. They copy their own account reference.
+1. The person signs in on the website, opens `/join`, and sets up their authenticator. They copy their own account reference.
 2. The superadmin completes the organisation’s identity, reference, interview, training and confidentiality checks outside the invitation form. Store verification records in a restricted system; enter only a reference here.
-3. In Team & access → Invitations, choose an existing state/city/service area and invite that verified account as an admin. A superadmin can add administrative child areas; doing so does not enable response or define a police jurisdiction.
-4. The code appears in a popup immediately. Copy and share it privately with the named person. The product does not email or text the code. It expires in seven days, works once, and only the invited account can accept it after MFA.
+3. In `/admin/team` → Invitations, choose an existing state/city/service area and invite that verified account as an admin. A superadmin can add administrative child areas; doing so does not enable response or define a police jurisdiction.
+4. The code appears in a popup immediately. Copy and share it privately with the named person. The product does not email or text the code. It expires in seven days, works once, and only the invited account can accept it at `/join` after MFA.
 5. Admin membership needs a new reviewed invitation after 90 days. Suspending an admin also invalidates employees sponsored by that admin and volunteer eligibility dependent on that approval chain.
 
 ## Add employees and assign support
 
 1. The area admin repeats the verified-account invitation flow for an employee within their own delegated area. An admin cannot appoint another admin or widen their area. Superadmins first appoint an accountable admin; that admin sponsors employees.
-2. Employees mark themselves available in `/team` for up to four hours. Admins assign available local employees from the support inbox. Each employee can hold at most five current cases.
+2. Employees mark themselves available in `/admin/team` for up to four hours. Admins assign available local employees from the support inbox. Each employee can hold at most five current cases.
 3. Employees acknowledge each assignment and confirm no conflict in Team & access → My assignments. Until acknowledgment, they receive only assignment metadata. Acknowledgment is due in 15 minutes; case access lasts up to seven days and stops on closure, expiry, blocking, review expiry or role revocation.
 4. New support requests may choose a pilot service area without location permission. Existing requests have no area and require superadmin triage. Before opening a case, a superadmin can assign its area with a recorded reason. Reassigning the area removes old assignments, oversight leases and evidence grants.
 5. An admin opens sensitive case/incident content only after recording a purpose, for up to ten minutes. This access is audited. Ordinary employees see only acknowledged assigned support cases. Volunteers cannot access ordinary support cases, even if an old consent flag is set.

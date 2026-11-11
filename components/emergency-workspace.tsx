@@ -167,7 +167,12 @@ function Empty({
 }
 export function EmergencyWorkspace() {
   const [scope, setScope] = useState("opening"),
-    [role, setRole] = useState<string | null>(null);
+    [role, setRole] = useState<string | null>(null),
+    [responder, setResponder] = useState(false);
+  const identify = useCallback((name: string | null, isResponder = false) => {
+    setRole(name);
+    setResponder(isResponder);
+  }, []);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     void getSupabase()
@@ -180,14 +185,22 @@ export function EmergencyWorkspace() {
     return () => data.subscription.unsubscribe();
   }, []);
   return (
-    <StaffWorkspaceShell active="emergency" role={role || "Connecting"}>
+    <StaffWorkspaceShell
+      active="emergency"
+      role={role || "Connecting"}
+      mode={responder ? "responder" : "staff"}
+    >
       <StaffMfa key={scope}>
-        <Session onRole={setRole} />
+        <Session onRole={identify} />
       </StaffMfa>
     </StaffWorkspaceShell>
   );
 }
-function Session({ onRole }: { onRole: (role: string | null) => void }) {
+function Session({
+  onRole,
+}: {
+  onRole: (role: string | null, responder?: boolean) => void;
+}) {
   const [role, setRole] = useState<string | null>(null),
     [root, setRoot] = useState(false),
     [alerts, setAlerts] = useState<DeskAlert[]>([]),
@@ -241,7 +254,13 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
       const context = await client.rpc("vv2_context").abortSignal(signal);
       if (context.error) throw context.error;
       setRoot(context.data.role === "superadmin");
-      onRole(workforceLabel(context.data.role));
+      onRole(
+        context.data.role === "volunteer" &&
+          ["volunteer", "police"].includes(role)
+          ? "Approved responder"
+          : workforceLabel(context.data.role),
+        ["volunteer", "police"].includes(role),
+      );
       let members: Team[] = [],
         map: Coverage = { regions: [], agencies: [] },
         reviews: Review[] = [],
@@ -413,8 +432,9 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
           <span className="tm-eyebrow">RESPONSE & COORDINATION</span>
           <h1>Emergency desk</h1>
           <p>
-            Review safety requests, coordinate responders and manage service
-            areas.
+            {role === "admin"
+              ? "Review safety requests, coordinate responders and manage service areas."
+              : "View your authorized offers, acknowledge availability and follow your coordinator’s assignments."}
           </p>
         </div>
         <button
@@ -496,8 +516,8 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
             text="An app account does not grant responder or supervisor access. Complete enrollment and review with your team."
           />
           <div className="tm-panel-foot">
-            <Link href="/team">
-              Open team enrollment <ArrowUpRight size={15} />
+            <Link href="/join">
+              Accept a staff invitation <ArrowUpRight size={15} />
             </Link>
           </div>
         </section>
@@ -770,7 +790,7 @@ function Session({ onRole }: { onRole: (role: string | null) => void }) {
                       here never promotes an account.
                     </p>
                   </div>
-                  <Link href="/team">
+                  <Link href="/admin/team">
                     Review enrollment <ArrowUpRight size={15} />
                   </Link>
                 </div>
@@ -1157,7 +1177,7 @@ function ResponderRow({
           {duty ? "On duty" : "Off duty"}
         </small>
       </div>
-      <Link className="tm-button secondary" href="/team">
+      <Link className="tm-button secondary" href="/admin/team">
         Review eligibility in Team & access
       </Link>
     </article>

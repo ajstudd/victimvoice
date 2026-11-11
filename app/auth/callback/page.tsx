@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { staffLanding } from "@/lib/support";
+import {
+  authenticatedLoginDestination,
+  consumeLoginDestination,
+} from "@/lib/staff-routing";
 
 export default function AuthCallback() {
   const started = useRef(false);
@@ -27,9 +31,12 @@ export default function AuthCallback() {
           throw new Error(
             "We could not finish sign-in. Please try again in the browser where you started.",
           );
-        const team = sessionStorage.getItem("vv-login-destination") === "/team";
-        sessionStorage.removeItem("vv-login-destination");
-        const destination = admin ? await staffLanding() : team ? "/team" : "/dashboard";
+        const requested = consumeLoginDestination();
+        const destination = authenticatedLoginDestination(
+          requested,
+          admin,
+          admin && requested !== "/join" ? await staffLanding() : null,
+        );
         if (!destination)
           throw new Error(
             "This account has not been approved for staff access. You can still sign in to request support.",

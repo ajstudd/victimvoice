@@ -48,7 +48,16 @@ http.createServer(async(req,res)=>{
  let args={};try{args=JSON.parse(body||'{}');}catch{}
  const send=(value,status=200)=>{res.writeHead(status);res.end(JSON.stringify(value));};
  if(url.pathname==='/functions/v1/sos'&&req.method==='GET'){send({relay:true,push:false});return;}
- if(url.pathname==='/auth/v1/token'){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureRole=args.email==='admin@example.test'?'admin':args.email==='employee@example.test'?'employee':'superadmin';fixtureFactors=[];send(fixtureSession());return;}
+ if(url.pathname==='/auth/v1/token'){
+  if(args.email){fixtureAal=args.email==='setup@example.test'?'aal1':'aal2';fixtureRole=args.email==='admin@example.test'?'admin':args.email==='employee@example.test'?'employee':['member@example.test','setup@example.test'].includes(args.email)?'member':args.email==='volunteer@example.test'?'volunteer':'superadmin';user.email=args.email;fixtureFactors=[];}
+  send(fixtureSession());return;}
+ if(url.pathname==='/auth/v1/otp'){send({});return;}
+ if(url.pathname==='/auth/v1/verify'){fixtureRole='member';fixtureAal='aal1';send(fixtureSession());return;}
+ if(url.pathname==='/auth/v1/authorize'){
+  const target=new URL(url.searchParams.get('redirect_to')||'http://127.0.0.1:3002/auth/callback');
+  if(target.origin!=='http://127.0.0.1:3002'||target.pathname!=='/auth/callback'){send({message:'Invalid fictional callback'},400);return;}
+  target.searchParams.set('code','fictional-pkce-code');res.writeHead(302,{Location:target.toString()});res.end();return;
+ }
  if(url.pathname==='/auth/v1/user'){send(fixtureUser());return;}
  if(url.pathname==='/auth/v1/logout'){send({});return;}
  if(url.pathname==='/auth/v1/factors'&&req.method==='POST'){const f={id:'00000000-0000-0000-0000-000000000099',factor_type:'totp',status:'unverified',friendly_name:'Fictional staff authenticator'};fixtureFactors=[f];send({...f,type:'totp',totp:{qr_code:fakeQr,secret:'JBSWY3DPEHPK3PXP',uri:'otpauth://totp/Victim%20Voice:demo%40example.test?secret=JBSWY3DPEHPK3PXP&issuer=Victim%20Voice'}});return;}
@@ -60,6 +69,10 @@ http.createServer(async(req,res)=>{
   const row=cases.find(c=>c.id===args.p_request_id)||cases[0];
   const scopes=[{id:'india',name:'India',kind:'country',parent_id:null},{id:'madhya_pradesh',name:'Madhya Pradesh',kind:'state',parent_id:'india'},{id:'bhopal',name:'Bhopal',kind:'city',parent_id:'madhya_pradesh'},{id:'tripura',name:'Tripura',kind:'state',parent_id:'india'},{id:'bhubaneswar',name:'Bhubaneswar',kind:'city',parent_id:'odisha'}];
   const application={user_id:emergencyTeam[0].user_id,display_name:'Priya Mishra',organisation:'Fictional community partner',scope_id:'bhopal',scope_name:'Bhopal',status:'approved',field_status:'pending',reviewer_id:'00000000-0000-0000-0000-000000000025',reviewed_by:'00000000-0000-0000-0000-000000000025',review_due:new Date(Date.now()+86400000).toISOString(),languages:'Hindi, English',skills:'First aid, listening',availability:'Weekends in Bhopal',decision_reason:'Fictional completed training and reference review',review_reference:'FAKE-REVIEW-2026',checks:{identity:true,contact:true,references:true,interview:true,training:true,confidentiality:true,local_area:true}};
+  if(name==='vv2_accept_staff'){
+   if(args.p_token!=='50000000-0000-0000-0000-000000000002'){send({message:'This invitation is invalid, expired, revoked or for a different account'},403);return;}
+   fixtureRole='employee';send(null);return;
+  }
   if(name==='vv2_context'){send({role:fixtureRole,display_name:'Fictional '+fixtureRole,memberships:fixtureRole==='superadmin'?[]:[{scope_id:'bhopal',scope_name:'Bhopal',role:fixtureRole,expires_at:new Date(Date.now()+7776000000).toISOString()}]});return;}
   if(name==='vv2_scopes'){send(fixtureRole==='superadmin'?scopes:scopes.filter(x=>x.id==='bhopal'));return;}
   if(name==='vv2_console'){send({staff:[{user_id:staff[0].user_id,display_name:'Maya Sharma',organisation:'Fictional support partner',role:fixtureRole==='superadmin'?'admin':'employee',scope_id:'bhopal',scope_name:'Bhopal',enabled:true,expires_at:new Date(Date.now()+7776000000).toISOString()}],invites:[],applications:[application],audit:[{id:'fixture-audit',actor_id:actor,actor_role:'employee',action:'volunteer_approved',reason:application.decision_reason,created_at:stamp}],reports:[]});return;}
@@ -70,7 +83,7 @@ http.createServer(async(req,res)=>{
   if(name==='vv2_incident_participants'){send([{user_id:emergencyTeam[0].user_id,display_name:'Priya Mishra',role:'volunteer',organisation:'Fictional partner'}]);return;}
   if(name==='vv2_list_evidence'){send([]);return;}
   if(name?.startsWith('vv2_')){send(null);return;}
-  if(name==='vv_sos_role'){send('admin');return;}
+  if(name==='vv_sos_role'){send(['superadmin','admin'].includes(fixtureRole)?'admin':fixtureRole==='volunteer'?'volunteer':null);return;}
   if(name==='vv_sos_list'){send(emergencyRequests);return;}
   if(name==='vv_sos_team'){send(emergencyTeam);return;}
   if(name==='vv_sos_areas'){send({regions:[{id:'bhopal',name:'Bhopal',scope:'City / commissionerate',source_url:'https://bhopal.mppolice.gov.in/contact/',geometry:null,volunteer_enabled:false},{id:'tripura',name:'Tripura',scope:'Entire state · district-by-district onboarding',source_url:'https://tripura.gov.in/',geometry:null,volunteer_enabled:false},{id:'bhubaneswar',name:'Bhubaneswar',scope:'Bhubaneswar Urban Police District',source_url:'https://bhubaneswarcuttackpolice.gov.in/know-your-police-station/',geometry:null,volunteer_enabled:false}],agencies:[]});return;}
@@ -83,7 +96,7 @@ http.createServer(async(req,res)=>{
   if(name==='vv_my_assignments'){send([]);return;}
   if(name==='vv_evidence_permissions'){send([]);return;}
   if(name==='vv_can_work_case'){send(accessAllowed);return;}
-  if(name==='is_admin'){send(true);return;}if(name==='vv_staff_role'){send(fixtureRole==='employee'?'case_worker':'admin');return;}
+  if(name==='is_admin'){send(true);return;}if(name==='vv_staff_role'){send(fixtureRole==='employee'?'case_worker':['superadmin','admin'].includes(fixtureRole)?'admin':'none');return;}
   if(name==='vv_list_cases'){send(cases.filter(c=>(!args.p_status||c.status===args.p_status)&&(!args.p_search||`${c.id} ${c.description}`.toLowerCase().includes(args.p_search.toLowerCase()))));return;}
   if(name==='vv_open_case'){send(row);return;}if(name==='vv_list_staff'){send(staff);return;}
   if(name==='vv_case_activity'){send(args.p_kind==='notes'?notes:events);return;}
