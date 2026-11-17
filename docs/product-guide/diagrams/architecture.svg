@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1320" viewBox="0 0 1500 1320"><rect width="100%" height="100%" fill="white"/>
+<text x="30" y="35" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">DEVICE AND BROWSER</text>
+<rect x="20" y="80" width="450" height="170" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="245.0" y="117" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Android app</text>
+<text x="245.0" y="163" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Expo and React Native</text>
+<text x="245.0" y="200" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Native SMS and sensors</text>
+<rect x="525" y="80" width="450" height="170" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="117" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Website and staff portal</text>
+<text x="750.0" y="163" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Next.js on Vercel</text>
+<text x="750.0" y="200" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">User and role based screens</text>
+<rect x="20" y="330" width="450" height="165" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="245.0" y="367" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Private phone vault</text>
+<text x="245.0" y="413" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Encrypted notes and plans</text>
+<text x="245.0" y="450" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Local key in SecureStore</text>
+<polyline points="245.0,250 245.0,330" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="245.0,330 238.91048252244278,317.39374056706254 251.08951747755722,317.39374056706254" fill="#4C6074"/>
+<rect x="177.5" y="276.0" width="135" height="32" fill="white"/>
+<text x="245" y="292" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">local writes</text>
+<rect x="525" y="330" width="450" height="165" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="367" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Supabase Auth</text>
+<text x="750.0" y="413" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Google and phone sign in</text>
+<text x="750.0" y="450" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Tokens and staff MFA</text>
+<polyline points="245.0,250 245,280 497,280 497,310 750,310 750.0,330" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,330 743.9104825224427,317.39374056706254 756.0895174775573,317.39374056706254" fill="#4C6074"/>
+<rect x="387.0" y="264.0" width="86" height="32" fill="white"/>
+<text x="430" y="280" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">sign in</text>
+<polyline points="750.0,250 750.0,330" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,330 743.9104825224427,317.39374056706254 756.0895174775573,317.39374056706254" fill="#4C6074"/>
+<rect x="707.0" y="276.0" width="86" height="32" fill="white"/>
+<text x="750" y="292" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">sign in</text>
+<text x="820" y="565" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">SHARED SUPABASE BACKEND</text>
+<rect x="20" y="625" width="690" height="185" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="365.0" y="662" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">PostgreSQL and PostGIS</text>
+<text x="365.0" y="708" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">RPC authorization and row policies</text>
+<text x="365.0" y="745" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Cases workforce journeys and SOS</text>
+<text x="365.0" y="782" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Geography matching and outbox</text>
+<rect x="800" y="625" width="675" height="185" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1137.5" y="662" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Private Storage</text>
+<text x="1137.5" y="708" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Support and incident attachments</text>
+<text x="1137.5" y="745" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Permission checked file access</text>
+<polyline points="750.0,495 750,545 365,545 365.0,625" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="365.0,625 358.91048252244275,612.3937405670625 371.08951747755725,612.3937405670625" fill="#4C6074"/>
+<rect x="405.0" y="534.0" width="210" height="32" fill="white"/>
+<text x="510" y="550" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">signed in requests</text>
+<polyline points="710,717.5 800,717.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="800,717.5 787.3937405670625,723.5895174775573 787.3937405670625,711.4104825224427" fill="#4C6074"/>
+<rect x="713.0" y="664.0" width="84" height="32" fill="white"/>
+<text x="755" y="680" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">grants</text>
+<rect x="20" y="920" width="690" height="165" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="365.0" y="957" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Edge Functions and worker</text>
+<text x="365.0" y="1003" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Deno TypeScript</text>
+<text x="365.0" y="1040" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Delivery jobs and signed callbacks</text>
+<polyline points="365.0,810 365.0,920" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="365.0,920 358.91048252244275,907.3937405670625 371.08951747755725,907.3937405670625" fill="#4C6074"/>
+<rect x="262.0" y="850.0" width="206" height="32" fill="white"/>
+<text x="365" y="866" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">outbox and status</text>
+<rect x="800" y="900" width="675" height="145" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1137.5" y="937" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Twilio SMS</text>
+<text x="1137.5" y="983" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Provider submission and callbacks</text>
+<rect x="800" y="1120" width="675" height="145" rx="12" fill="#FFF6E7" stroke="#586A7C" stroke-width="2"/>
+<text x="1137.5" y="1157" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Expo Push and Android FCM</text>
+<text x="1137.5" y="1203" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Setup pending and push disabled</text>
+<polyline points="710,1002.5 755,1002 755,972 800,972.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="800,972.5 787.3268615301112,978.4490807124314 787.4621757882493,966.2707974799948" fill="#4C6074"/>
+<rect x="720.0" y="1034.0" width="70" height="32" fill="white"/>
+<text x="755" y="1050" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">SMS</text>
+<polyline points="365.0,1085 365,1192 800,1192.5" fill="none" stroke="#876426" stroke-width="3" stroke-dasharray="11 9"/>
+<polygon points="800,1192.5 787.386749453861,1198.5750235110922 787.4007483353664,1186.3959966013092" fill="#876426"/>
+<rect x="475.0" y="1144.0" width="190" height="32" fill="white"/>
+<text x="570" y="1160" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">planned channel</text>
+<text x="30" y="1295" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Cloud authority stays in backend rules. The private vault is not a staff database.</text>
+</svg>

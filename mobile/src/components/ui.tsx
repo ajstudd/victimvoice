@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   View,
+  Image,
   Text,
   Pressable,
   StyleSheet,
@@ -351,6 +352,16 @@ export function Page({
                   color={dark ? colors.paper : colors.ink}
                 />
               </Pressable>
+            )}
+            {(!title || title === "Victim Voice") && (
+              <View style={{ backgroundColor: colors.paper, borderRadius: 11, padding: 5, marginRight: 10 }}>
+                <Image
+                  source={require("../../assets/helping-hands.png")}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                  accessible={false}
+                />
+              </View>
             )}
             <T kind="label" color={dark ? colors.paper : colors.ink}>
               {title || "Victim Voice"}

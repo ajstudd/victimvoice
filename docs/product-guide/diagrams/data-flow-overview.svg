@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1340" viewBox="0 0 1500 1340"><rect width="100%" height="100%" fill="white"/>
+<rect x="20" y="30" width="470" height="150" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="255.0" y="67" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Woman using Victim Voice</text>
+<text x="255.0" y="113" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">App or website</text>
+<rect x="1010" y="30" width="470" height="150" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1245.0" y="67" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">Authorized staff</text>
+<text x="1245.0" y="113" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Assigned support and oversight</text>
+<rect x="490" y="335" width="520" height="175" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="372" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">1 Shared access checks</text>
+<text x="750.0" y="418" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Auth session plus RPC and RLS</text>
+<text x="750.0" y="455" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Role scope consent and expiry</text>
+<polyline points="255.0,180 255,250 750,250 750.0,335" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,335 743.9104825224427,322.39374056706254 756.0895174775573,322.39374056706254" fill="#4C6074"/>
+<rect x="204.5" y="234.0" width="311" height="32" fill="white"/>
+<text x="360" y="250" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">chosen request or message</text>
+<polyline points="1245.0,180 1245,250 750,250 750.0,335" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,335 743.9104825224427,322.39374056706254 756.0895174775573,322.39374056706254" fill="#4C6074"/>
+<rect x="1006.5" y="234.0" width="247" height="32" fill="white"/>
+<text x="1130" y="250" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">case work and replies</text>
+<rect x="20" y="680" width="470" height="200" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="255.0" y="717" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">D1 Application database</text>
+<text x="255.0" y="763" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Cases and conversations</text>
+<text x="255.0" y="800" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Assignments and audit</text>
+<text x="255.0" y="837" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Temporary journey point</text>
+<rect x="1010" y="680" width="470" height="200" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1245.0" y="717" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">D2 Private files</text>
+<text x="1245.0" y="763" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Selected evidence only</text>
+<text x="1245.0" y="800" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Authenticated download</text>
+<polyline points="750.0,510 750,580 255,580 255.0,680" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="255.0,680 248.91048252244278,667.3937405670625 261.08951747755725,667.3937405670625" fill="#4C6074"/>
+<rect x="206.0" y="572.0" width="278" height="32" fill="white"/>
+<text x="345" y="588" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">allowed reads and writes</text>
+<polyline points="750.0,510 750,580 1245,580 1245.0,680" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1245.0,680 1238.9104825224429,667.3937405670625 1251.0895174775571,667.3937405670625" fill="#4C6074"/>
+<rect x="1002.0" y="572.0" width="296" height="32" fill="white"/>
+<text x="1150" y="588" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">upload or checked viewing</text>
+<rect x="490" y="1030" width="520" height="165" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="1067" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">2 Visible results</text>
+<text x="750.0" y="1113" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Messages status and access results</text>
+<text x="750.0" y="1150" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Polling while view is open</text>
+<polyline points="255.0,880 255,950 750,950 750.0,1030" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,1030 743.9104825224427,1017.3937405670625 756.0895174775573,1017.3937405670625" fill="#4C6074"/>
+<rect x="263.0" y="934.0" width="204" height="32" fill="white"/>
+<text x="365" y="950" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">scoped case data</text>
+<polyline points="1245.0,880 1245,950 750,950 750.0,1030" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,1030 743.9104825224427,1017.3937405670625 756.0895174775573,1017.3937405670625" fill="#4C6074"/>
+<rect x="1034.0" y="934.0" width="252" height="32" fill="white"/>
+<text x="1160" y="950" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">permitted media bytes</text>
+<text x="25" y="1265" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">User and staff receive results through their existing screens.</text>
+<text x="25" y="1310" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Private journal data stays on the phone unless the user deliberately shares it.</text>
+</svg>

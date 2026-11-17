@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1390" viewBox="0 0 1500 1390"><rect width="100%" height="100%" fill="white"/>
+<rect x="830" y="20" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="54" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_operating_scopes</text>
+<path d="M840 83H1470" stroke="#CBD4DE"/>
+<text x="848" y="112" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="848" y="148" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK parent_id &gt; same table</text>
+<text x="848" y="184" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">name and kind</text>
+<rect x="20" y="20" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="54" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">auth.users</text>
+<path d="M30 83H660" stroke="#CBD4DE"/>
+<text x="38" y="112" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="38" y="148" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Supabase account identity</text>
+<rect x="20" y="350" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_staff_profiles</text>
+<path d="M30 413H660" stroke="#CBD4DE"/>
+<text x="38" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id &gt; auth.users</text>
+<text x="38" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">display_name and organisation</text>
+<rect x="830" y="350" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_staff_memberships</text>
+<path d="M840 413H1470" stroke="#CBD4DE"/>
+<text x="848" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id and scope_id</text>
+<text x="848" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; vv_staff_profiles</text>
+<text x="848" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">role enabled and expires_at</text>
+<polyline points="345.0,225 345.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="345.0,350 338.91048252244275,337.39374056706254 351.08951747755725,337.39374056706254" fill="#4C6074"/>
+<rect x="252.5" y="264.0" width="185" height="32" fill="white"/>
+<text x="345" y="280" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to zero or one</text>
+<polyline points="1155.0,225 1155.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1155.0,350 1148.9104825224429,337.39374056706254 1161.0895174775571,337.39374056706254" fill="#4C6074"/>
+<rect x="1093.5" y="264.0" width="123" height="32" fill="white"/>
+<text x="1155" y="280" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="670,452.5 830,452.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="830,452.5 817.3937405670625,458.58951747755725 817.3937405670625,446.41048252244275" fill="#4C6074"/>
+<rect x="688.5" y="434.0" width="123" height="32" fill="white"/>
+<text x="750" y="450" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="20" y="685" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="719" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_staff_invites</text>
+<path d="M30 748H660" stroke="#CBD4DE"/>
+<text x="38" y="777" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK scope_id</text>
+<text x="38" y="813" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK account_id &gt; auth.users</text>
+<text x="38" y="849" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">token_hash and expires_at</text>
+<rect x="830" y="685" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="719" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_volunteer_applications</text>
+<path d="M840 748H1470" stroke="#CBD4DE"/>
+<text x="848" y="777" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id &gt; auth.users</text>
+<text x="848" y="813" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK scope_id and reviewer IDs</text>
+<text x="848" y="849" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">status and field_status</text>
+<polyline points="1480,122.5 1495,122 1495,625 1155,625 1155.0,685" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1155.0,685 1148.9104825224429,672.3937405670625 1161.0895174775571,672.3937405670625" fill="#4C6074"/>
+<rect x="1258.5" y="584.0" width="123" height="32" fill="white"/>
+<text x="1320" y="600" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="20" y="1020" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="1054" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">admin_users</text>
+<path d="M30 1083H660" stroke="#CBD4DE"/>
+<text x="38" y="1112" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id &gt; auth.users</text>
+<text x="38" y="1148" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Database controlled superadmin</text>
+<rect x="830" y="1020" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="1054" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_governance_audit</text>
+<path d="M840 1083H1470" stroke="#CBD4DE"/>
+<text x="848" y="1112" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK scope_id</text>
+<text x="848" y="1148" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK actor_id &gt; auth.users</text>
+<text x="848" y="1184" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK request_id and event_id</text>
+<text x="20" y="1280" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Invites applications memberships and audits each reference their operating scope.</text>
+<text x="20" y="1330" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Selected FK edges shown. Reviewer sponsor and approver IDs also reference auth.users.</text>
+</svg>

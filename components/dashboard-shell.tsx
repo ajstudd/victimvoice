@@ -1,7 +1,8 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
 import Link from "next/link";
 import { useState } from "react";
-import { LogOut, Phone, Shield } from "lucide-react";
+import { LogOut, Phone } from "lucide-react";
 import { signOut } from "@/lib/supabase";
 import { statusCopy } from "@/shared/support-copy";
 
@@ -18,7 +19,7 @@ export function DashboardShell({
       <header className="vv-dash-top">
         <Link href="/dashboard" className="vv-dash-brand">
           <span>
-            <Shield size={18} />
+            <BrandMark size={28} />
           </span>
           Victim Voice
         </Link>

@@ -10,6 +10,7 @@ import {
 import { Accelerometer } from "expo-sensors";
 import { router } from "expo-router";
 import { useApp, uuid } from "../state/AppState";
+import { setMotionStatus, useMotionStatus } from "../lib/motion-status";
 import { nativeSms } from "../lib/native-sms";
 import {
   ShakeDetector,
@@ -33,6 +34,8 @@ function Monitor() {
   const [deadline, setDeadline] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState("");
+  const [sensorState, setSensorState] = useState("starting");
+  const lastSample = useRef(0);
   const pending = useRef<number | null>(null),
     cooldown = useRef(0),
     sending = useRef(false);
@@ -47,10 +50,30 @@ function Monitor() {
   );
   const active = hasActiveSos(vault.sos, now);
   useEffect(() => {
-    if (vault.sos?.status !== "active") return;
-    const timer = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(timer);
-  }, [vault.sos?.id, vault.sos?.status]);
+    const tick = () => {
+      if (AppState.currentState === "active") setNow(Date.now());
+    };
+    const timer = setInterval(tick, 1000);
+    const sub = AppState.addEventListener("change", tick);
+    return () => { clearInterval(timer); sub.remove(); };
+  }, []);
+  useEffect(() => {
+    const text = Platform.OS === "web" ? "Use the installed phone app for motion detection"
+      : !enabled ? "Off · Turn on in Settings"
+      : !ready ? "Checking shake & drop detection…"
+      : !setup ? "Paused · Add a contact and finish Safety message setup"
+      : !deliverable ? "Paused · Enable SIM SMS or signed-in SMS fallback"
+      : AppState.currentState !== "active" ? "Paused · Keep Victim Voice open"
+      : active ? "Paused · Finish or cancel your active safety request"
+      : deadline !== null ? "Check-in open · Cancel or send from the prompt"
+      : now < cooldown.current ? `Paused · Ready again in ${Math.ceil((cooldown.current - now) / 1000)} seconds`
+      : sensorState === "permission" ? "Paused · Allow motion access in Settings"
+      : sensorState === "unavailable" ? "Motion sensor unavailable · Use Get help"
+      : sensorState !== "listening" ? "Starting motion detection…"
+      : !lastSample.current || now - lastSample.current > 2000 ? "Waiting for motion sensor readings · Reopen the app if this persists"
+      : "Listening · Shake firmly 3 times within 3 seconds";
+    setMotionStatus(text);
+  }, [enabled, ready, setup, deliverable, active, deadline, now, sensorState]);
   function cancel() {
     pending.current = null;
     setDeadline(null);
@@ -59,14 +82,18 @@ function Monitor() {
   }
   useEffect(() => {
     let stopped = false;
+    let generation = 0;
     let subscription: { remove: () => void } | undefined;
     const reset = () => {
+      generation += 1;
+      lastSample.current = 0;
       subscription?.remove();
       subscription = undefined;
       pending.current = null;
       setDeadline(null);
     };
     const start = async () => {
+      const current = ++generation;
       if (
         stopped ||
         !ready ||
@@ -79,28 +106,36 @@ function Monitor() {
       )
         return;
       try {
-        if (
-          !(await Accelerometer.isAvailableAsync()) ||
-          !(await Accelerometer.getPermissionsAsync()).granted
-        )
+        setSensorState("starting");
+        const available = await Accelerometer.isAvailableAsync();
+        const permission = await Accelerometer.getPermissionsAsync();
+        if (stopped || current !== generation || AppState.currentState !== "active") return;
+        if (!available || !permission.granted) {
+          setSensorState(available ? "permission" : "unavailable");
           return;
-        if (stopped || AppState.currentState !== "active") return;
+        }
         const shake = new ShakeDetector(),
           drop = new DropDetector();
-        Accelerometer.setUpdateInterval(100);
+        Accelerometer.setUpdateInterval(20);
         subscription?.remove();
-        subscription = Accelerometer.addListener(({ x, y, z }) => {
+        setSensorState("listening");
+        subscription = Accelerometer.addListener(({ x, y, z, timestamp }) => {
           if (
             stopped ||
+            current !== generation ||
             AppState.currentState !== "active" ||
             pending.current !== null ||
             Date.now() < cooldown.current
           )
             return;
+          if (![x, y, z].every(Number.isFinite)) return;
+          lastSample.current = Date.now();
           const time = Date.now(),
             g = magnitude(x, y, z);
-          const shaken = shake.sample(g, time),
-            dropped = drop.sample(g, time);
+          const sampledAt = Number.isFinite(timestamp) && timestamp >= 0
+            ? timestamp * 1000 : performance.now();
+          const shaken = shake.sample(g, sampledAt),
+            dropped = drop.sample(g, sampledAt);
           if (shaken || dropped) {
             pending.current = advanceCheckIn(
               { state: "armed", deadline: null },
@@ -114,7 +149,7 @@ function Monitor() {
           }
         });
       } catch {
-        /* Settings explains sensor and permission requirements. */
+        if (!stopped && current === generation) setSensorState("unavailable");
       }
     };
     const listener = AppState.addEventListener("change", (state) => {
@@ -264,35 +299,8 @@ function Monitor() {
 }
 export function MotionSettings() {
   const { vault, save, session } = useApp();
+  const status = useMotionStatus();
   const [message, setMessage] = useState("");
-  const [sensor, setSensor] = useState("checking");
-  useEffect(() => {
-    let active = true;
-    async function check() {
-      if (Platform.OS === "web") {
-        if (active) setSensor("phone");
-        return;
-      }
-      try {
-        const available = await Accelerometer.isAvailableAsync();
-        const permission = await Accelerometer.getPermissionsAsync();
-        if (active)
-          setSensor(
-            !available
-              ? "unavailable"
-              : permission.granted
-                ? "ready"
-                : "permission",
-          );
-      } catch {
-        if (active) setSensor("unavailable");
-      }
-    }
-    void check();
-    return () => {
-      active = false;
-    };
-  }, [vault.motionPermissionCheckedAt]);
   const enabled = vault.motionAlertsEnabled !== false;
   const cap = nativeSms?.capabilities();
   const ready = Boolean(
@@ -305,19 +313,7 @@ export function MotionSettings() {
     <>
       <Row
         title="Shake & drop alerts"
-        subtitle={
-          enabled
-            ? !ready
-              ? "On · Finish your message setup"
-              : sensor === "ready"
-                ? "On · Works while the app is open"
-                : sensor === "permission"
-                  ? "On · Allow motion access to start"
-                  : sensor === "checking"
-                    ? "Checking motion access…"
-                    : "Use a phone with motion access"
-            : "Off · You can still send a help request yourself"
-        }
+        subtitle={status}
         icon="activity"
         end={
           <Switch
@@ -333,10 +329,10 @@ export function MotionSettings() {
         }
       />
       <T kind="caption">
-        When this is on, three strong shakes or a possible phone drop open a
+        When Listening is shown, three firm shakes within three seconds or a possible phone drop open a
         20-second check-in. Tap “I’m okay” to cancel. Otherwise, we will try to
         send a safety request to your first five contacts, with primary contacts
-        first. Detection pauses when you close or lock the app.
+        first. Detection pauses when you close or lock the app, during an active safety request, and for one minute after cancellation. Do not drop your phone to test this.
       </T>
       <T kind="caption">
         {vault.contacts.length

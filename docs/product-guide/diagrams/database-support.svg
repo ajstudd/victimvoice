@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1420" viewBox="0 0 1500 1420"><rect width="100%" height="100%" fill="white"/>
+<rect x="420" y="15" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="438" y="49" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">support_requests</text>
+<path d="M430 78H1060" stroke="#CBD4DE"/>
+<text x="438" y="107" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="438" y="143" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK user_id  &gt; auth.users</text>
+<text x="438" y="179" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK scope_id &gt; vv_operating_scopes</text>
+<rect x="15" y="350" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="33" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">comments</text>
+<path d="M25 413H465" stroke="#CBD4DE"/>
+<text x="33" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="33" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK request_id</text>
+<text x="33" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK author_id &gt; auth.users</text>
+<rect x="520" y="350" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="538" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_case_assignments</text>
+<path d="M530 413H970" stroke="#CBD4DE"/>
+<text x="538" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK request_id and user_id</text>
+<text x="538" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; auth.users</text>
+<text x="538" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">accepted_at and expires_at</text>
+<rect x="1025" y="350" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1043" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_case_evidence</text>
+<path d="M1035 413H1475" stroke="#CBD4DE"/>
+<text x="1043" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK request_id</text>
+<text x="1043" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK uploader_id &gt; auth.users</text>
+<text x="1043" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">storage_path and sha256</text>
+<polyline points="745.0,220 745,275 245.0,275 245.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="245.0,350 238.91048252244278,337.39374056706254 251.08951747755722,337.39374056706254" fill="#4C6074"/>
+<rect x="183.5" y="282.0" width="123" height="32" fill="white"/>
+<text x="245.0" y="298" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="745.0,220 745,275 750.0,275 750.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,350 743.9104825224427,337.39374056706254 756.0895174775573,337.39374056706254" fill="#4C6074"/>
+<rect x="688.5" y="282.0" width="123" height="32" fill="white"/>
+<text x="750.0" y="298" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="745.0,220 745,275 1255.0,275 1255.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1255.0,350 1248.9104825224429,337.39374056706254 1261.0895174775571,337.39374056706254" fill="#4C6074"/>
+<rect x="1193.5" y="282.0" width="123" height="32" fill="white"/>
+<text x="1255.0" y="298" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="15" y="705" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="33" y="739" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_case_notes</text>
+<path d="M25 768H465" stroke="#CBD4DE"/>
+<text x="33" y="797" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK request_id</text>
+<text x="33" y="833" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK author_id &gt; auth.users</text>
+<text x="33" y="869" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Internal content</text>
+<rect x="520" y="705" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="538" y="739" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_case_events</text>
+<path d="M530 768H970" stroke="#CBD4DE"/>
+<text x="538" y="797" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK request_id</text>
+<text x="538" y="833" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK actor_id &gt; auth.users</text>
+<text x="538" y="869" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Action and created_at</text>
+<rect x="1025" y="705" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1043" y="739" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_evidence_grants</text>
+<path d="M1035 768H1475" stroke="#CBD4DE"/>
+<text x="1043" y="797" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK evidence_id and worker_id</text>
+<text x="1043" y="833" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">worker_id &gt; auth.users</text>
+<text x="1043" y="869" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">expires_at</text>
+<polyline points="420,117.5 0,117 0,640 245,640 245.0,705" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="245.0,705 238.91048252244278,692.3937405670625 251.08951747755722,692.3937405670625" fill="#4C6074"/>
+<rect x="83.5" y="609.0" width="123" height="32" fill="white"/>
+<text x="145" y="625" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="745.0,220 995,250 995,640 750,640 750.0,705" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,705 743.9104825224427,692.3937405670625 756.0895174775573,692.3937405670625" fill="#4C6074"/>
+<rect x="693.5" y="614.0" width="123" height="32" fill="white"/>
+<text x="755" y="630" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="1255.0,555 1255.0,705" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1255.0,705 1248.9104825224429,692.3937405670625 1261.0895174775571,692.3937405670625" fill="#4C6074"/>
+<rect x="1193.5" y="616.0" width="123" height="32" fill="white"/>
+<text x="1255" y="632" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="1025" y="1080" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1043" y="1114" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_evidence_leases</text>
+<path d="M1035 1143H1475" stroke="#CBD4DE"/>
+<text x="1043" y="1172" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK evidence_id and user_id</text>
+<text x="1043" y="1208" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; auth.users</text>
+<text x="1043" y="1244" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">expires_at</text>
+<polyline points="1025,452.5 1005,452 1005,1020 1255,1020 1255.0,1080" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1255.0,1080 1248.9104825224429,1067.3937405670624 1261.0895174775571,1067.3937405670624" fill="#4C6074"/>
+<rect x="948.5" y="984.0" width="123" height="32" fill="white"/>
+<text x="1010" y="1000" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<text x="20" y="1140" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Storage object bytes are separate from evidence metadata.</text>
+<text x="20" y="1190" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">storage_path is an application mapping, not a database FK.</text>
+<text x="20" y="1330" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Solid arrows are selected foreign keys from parent to child. PK = primary key; FK = foreign key.</text>
+<text x="20" y="1380" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Other Auth relationships are shown as fields to keep lines readable. Non key fields are abbreviated.</text>
+</svg>

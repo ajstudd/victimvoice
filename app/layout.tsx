@@ -10,7 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'VictimVoice - Safe Space for Survivors',
+  title: 'Victim Voice - Safety and Support',
   description: 'A secure platform for reporting and addressing abuse cases',
 };
 export const dynamicParams = true;

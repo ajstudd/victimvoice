@@ -1,4 +1,5 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
 import { PurposeAccess } from "./purpose-access";
 import { workforceLabel, type WorkforceContext } from "@/lib/workforce";
 import { StaffMfa } from "@/components/staff-mfa";
@@ -98,7 +99,12 @@ function WorkspaceSession() {
   const selectedId = params.get("id");
   const [pendingAssignments, setPendingAssignments] = useState(0);
   const [role, setRole] = useState<StaffRole>("none");
-  const [identity, setIdentity] = useState("Support session");
+  const [identity, setIdentity] = useState<{
+    name: string;
+    role: string;
+    areas: string;
+    watermark: string;
+  } | null>(null);
   const [rows, setRows] = useState<CaseSummary[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [search, setSearch] = useState("");
@@ -139,9 +145,27 @@ function WorkspaceSession() {
       .then(async ([value, user, context]) => {
         if (!active) return;
         setRole(value);
-        setIdentity(
-          `${workforceLabel(context.role)} · ${user.data.user?.id.slice(0, 8) || "session"}`,
+        const account = user.data.user;
+        const accountName =
+          account?.user_metadata.full_name || account?.user_metadata.name;
+        const name =
+          context.role === "superadmin"
+            ? (typeof accountName === "string" && accountName.trim()) ||
+              account?.email || context.display_name
+            : context.display_name;
+        const areas = Array.from(
+          new Set(context.memberships.map((membership) => membership.scope_name)),
         );
+        const roleLabel = workforceLabel(context.role);
+        setIdentity({
+          name,
+          role: roleLabel,
+          areas:
+            context.role === "superadmin"
+              ? "All regions"
+              : areas.join(", ") || "Area unassigned",
+          watermark: `${roleLabel} · ${account?.id.slice(0, 8) || "session"}`,
+        });
         if (value === "admin") {
           const people = await getStaff();
           if (active) setStaff(people);
@@ -188,17 +212,21 @@ function WorkspaceSession() {
       <header className="support-topbar">
         <Link className="support-brand" href="/admin">
           <span>
-            <Shield size={20} />
+            <BrandMark size={30} />
           </span>
           <strong>
             Victim Voice<small>SUPPORT WORKSPACE</small>
           </strong>
         </Link>
+        <div className="support-session">
+          {identity && (
+            <>
+              <strong>{identity.name}</strong>
+              <span>{identity.role} · {identity.areas}</span>
+            </>
+          )}
+        </div>
         <div className="support-topbar-right">
-          <span className="support-session">
-            <i />
-            {identity}
-          </span>
           {role === "admin" && (
             <>
               <Link
@@ -377,7 +405,7 @@ function WorkspaceSession() {
               id={selectedId}
               role={role}
               staff={staff}
-              identity={identity}
+              identity={identity?.watermark || "Support session"}
               onChanged={refresh}
             />
           </CasePurpose>

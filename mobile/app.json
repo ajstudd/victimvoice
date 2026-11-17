@@ -2,7 +2,7 @@
   "expo": {
     "name": "Victim Voice",
     "slug": "victim-voice",
-    "version": "1.2.1",
+    "version": "1.2.3",
     "orientation": "portrait",
     "icon": "./assets/brand-icon.png",
     "userInterfaceStyle": "light",
@@ -12,8 +12,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#30253D",
-        "foregroundImage": "./assets/brand-icon.png"
+        "backgroundColor": "#FBF7F2",
+        "foregroundImage": "./assets/brand-adaptive.png"
       },
       "predictiveBackGestureEnabled": true,
       "package": "in.victimvoice.app",
@@ -27,7 +27,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "versionCode": 5
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/brand-icon.png",
@@ -63,7 +63,15 @@
         }
       ],
       "expo-updates",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FBF7F2",
+          "image": "./assets/helping-hands.png",
+          "imageWidth": 160
+        }
+      ]
     ],
     "scheme": "victimvoice",
     "extra": {

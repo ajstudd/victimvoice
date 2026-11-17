@@ -2,6 +2,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { BrandMark } from "@/components/brand-mark";
 import { useWorkforceSession } from "@/hooks/useWorkforceSession";
 import {
   canManagePersonnel,
@@ -18,6 +19,7 @@ export function StaffRouteStatus({
 }) {
   return (
     <main className="staff-route-status min-h-screen flex flex-col items-center justify-center gap-5 p-6 text-center">
+      <BrandMark size={56} />
       <h1 className="text-2xl font-semibold">Victim Voice staff workspace</h1>
       {error ? (
         <>

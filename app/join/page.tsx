@@ -1,7 +1,8 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield, Copy, Check, ArrowRight, LockKeyhole } from "lucide-react";
+import { Copy, Check, ArrowRight, LockKeyhole } from "lucide-react";
 import { staffHomeForRole } from "@/lib/staff-routing";
 import { useWorkforceSession } from "@/hooks/useWorkforceSession";
 import { getSupabase, signOut } from "@/lib/supabase";
@@ -19,7 +20,7 @@ export default function JoinStaff() {
     <main className="join-page">
       <Link className="tm-brand join-brand" href="/">
         <span>
-          <Shield size={24} />
+          <BrandMark size={28} />
         </span>
         <div>
           Victim Voice<small>STAFF INVITATIONS</small>

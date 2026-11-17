@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -74,10 +74,9 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary">
       <div className="w-full max-w-md p-8 bg-card rounded-xl shadow-lg animate-fade-in">
-        <div className="flex justify-center mb-8">
-          <div className="p-3 rounded-full bg-primary/10">
-            <Lock className="h-8 w-8 text-primary" />
-          </div>
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <BrandMark size={64} />
+          <span className="font-semibold">Victim Voice</span>
         </div>
 
         <h1 className="text-2xl font-bold text-center mb-2">Staff sign-in</h1>

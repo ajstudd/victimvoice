@@ -16,6 +16,7 @@ import {
   s,
   colors,
 } from "./ui";
+import { useMotionStatus } from "../lib/motion-status";
 import { useApp, Contact, uuid } from "../state/AppState";
 import { openCall, composeHelp } from "../lib/actions";
 import { normalizePhone } from "../lib/safety";
@@ -23,6 +24,7 @@ import { confirmAction } from "../lib/confirm";
 import { PrivateGate } from "./PrivateGate";
 
 export function Home() {
+  const motionStatus = useMotionStatus();
   const { vault, ready, notice, session } = useApp();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -139,11 +141,7 @@ export function Home() {
         />
         <QuickAction
           title="Shake & drop"
-          detail={
-            vault.motionAlertsEnabled === false
-              ? "Off · Settings"
-              : "Manage in Settings"
-          }
+          detail={motionStatus}
           icon="shield"
           tone={colors.lilac}
           onPress={() => router.push("/settings")}

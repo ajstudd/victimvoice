@@ -1,4 +1,5 @@
 .support-app {
+  color-scheme: light;
   --support-ink: #30253d;
   --support-muted: #6e6475;
   --support-line: #e7e1e9;
@@ -30,7 +31,7 @@
   cursor: not-allowed;
 }
 .support-topbar {
-  height: 80px;
+  min-height: 80px;
   background: #fff;
   display: flex;
   justify-content: space-between;
@@ -52,7 +53,7 @@
   display: grid;
   place-items: center;
   border-radius: 13px;
-  background: #30253d;
+  background: #fbf7f2;
   color: #fff;
 }
 .support-brand strong {
@@ -73,17 +74,18 @@
   gap: 20px;
 }
 .support-session {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  min-width: 0;
+  margin-left: auto;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  overflow-wrap: anywhere;
   font-size: 12px;
   color: #6e6475;
 }
-.support-session i {
-  width: 6px;
-  height: 6px;
-  background: #397262;
-  border-radius: 50%;
+.support-session strong {
+  color: var(--support-ink);
+  font-size: 14px;
 }
 .support-private-notice {
   min-height: 37px;
@@ -872,14 +874,34 @@
   background: #fff;
 }
 .case-chat-composer textarea {
-  background: transparent;
+  display: block;
+  background-color: #faf7fb;
   resize: vertical;
   width: 100%;
   min-height: 88px;
-  border: 0;
-  color: #5c3d6e;
+  border: 1px solid #ddd3e4;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin: 5px 0 10px;
+  color: #30253d;
   font-size: 14px;
-  outline: none;
+}
+.case-chat-composer textarea::placeholder {
+  color: #6e6475;
+  opacity: 1;
+}
+.case-chat-composer button[type="submit"] {
+  background-color: #574163;
+  color: #fff;
+}
+.case-chat-composer button[type="submit"]:enabled:hover {
+  background-color: #44314f;
+}
+.case-chat-composer button[type="submit"]:disabled {
+  opacity: 1;
+  background-color: #e9e2ec;
+  border-color: #d9cddd;
+  color: #584c61;
 }
 .case-chat-composer label {
   color: #76617f;
@@ -1107,14 +1129,18 @@
 }
 @media (max-width: 700px) {
   .support-topbar {
-    height: 68px;
-    padding: 0 16px;
+    min-height: 68px;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .support-brand strong {
     font-size: 16px;
   }
   .support-session {
-    display: none;
+    order: 1;
+    flex-basis: 100%;
+    text-align: left;
   }
   .support-topbar-right {
     gap: 7px;

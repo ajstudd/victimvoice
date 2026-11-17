@@ -1,4 +1,5 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -29,7 +30,7 @@ export function StaffWorkspaceShell({
       <aside className="tm-sidebar">
         <Link className="tm-brand" href="/admin">
           <span>
-            <Shield size={23} />
+            <BrandMark size={28} />
           </span>
           <div>
             Victim Voice<small>SUPPORT WORKSPACE</small>

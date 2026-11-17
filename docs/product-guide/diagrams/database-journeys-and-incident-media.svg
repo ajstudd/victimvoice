@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1550" viewBox="0 0 1500 1550"><rect width="100%" height="100%" fill="white"/>
+<rect x="420" y="10" width="660" height="145" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="438" y="44" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">auth.users</text>
+<path d="M430 73H1070" stroke="#CBD4DE"/>
+<text x="438" y="102" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<rect x="15" y="280" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="33" y="314" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_contacts</text>
+<path d="M25 343H465" stroke="#CBD4DE"/>
+<text x="33" y="372" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="33" y="408" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK user_id &gt; auth.users</text>
+<text x="33" y="444" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">name and phone</text>
+<rect x="520" y="280" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="538" y="314" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_journey_live</text>
+<path d="M530 343H970" stroke="#CBD4DE"/>
+<text x="538" y="372" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="538" y="408" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK user_id UNIQUE &gt; auth.users</text>
+<text x="538" y="444" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">token_hash and expires_at</text>
+<rect x="1025" y="280" width="460" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1043" y="314" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_safety_plans</text>
+<path d="M1035 343H1475" stroke="#CBD4DE"/>
+<text x="1043" y="372" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id &gt; auth.users</text>
+<text x="1043" y="408" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Schema foundation table</text>
+<text x="1043" y="444" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Current app plan stays local</text>
+<polyline points="750.0,155 750,200 245.0,200 245.0,280" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="245.0,280 238.91048252244278,267.39374056706254 251.08951747755722,267.39374056706254" fill="#4C6074"/>
+<rect x="183.5" y="209.0" width="123" height="32" fill="white"/>
+<text x="245.0" y="225" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="750.0,155 750,200 750.0,200 750.0,280" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,280 743.9104825224427,267.39374056706254 756.0895174775573,267.39374056706254" fill="#4C6074"/>
+<rect x="657.5" y="209.0" width="185" height="32" fill="white"/>
+<text x="750.0" y="225" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to zero or one</text>
+<polyline points="750.0,155 750,200 1255.0,200 1255.0,280" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1255.0,280 1248.9104825224429,267.39374056706254 1261.0895174775571,267.39374056706254" fill="#4C6074"/>
+<rect x="1162.5" y="209.0" width="185" height="32" fill="white"/>
+<text x="1255.0" y="225" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to zero or one</text>
+<rect x="20" y="620" width="650" height="170" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="654" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_events</text>
+<path d="M30 683H660" stroke="#CBD4DE"/>
+<text x="38" y="712" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="38" y="748" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK user_id &gt; auth.users</text>
+<rect x="830" y="620" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="654" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_incident_messages</text>
+<path d="M840 683H1470" stroke="#CBD4DE"/>
+<text x="848" y="712" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK event_id</text>
+<text x="848" y="748" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK author_id &gt; auth.users</text>
+<text x="848" y="784" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">content and created_at</text>
+<polyline points="670,705.0 830,722.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="830,722.5 816.8063818808962,727.1827813238775 818.1305668367144,715.0759474421112" fill="#4C6074"/>
+<rect x="688.5" y="686.0" width="123" height="32" fill="white"/>
+<text x="750" y="702" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="20" y="920" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="954" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_incident_evidence</text>
+<path d="M30 983H660" stroke="#CBD4DE"/>
+<text x="38" y="1012" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="38" y="1048" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK request_id &gt; vv_sos_events</text>
+<text x="38" y="1084" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">storage_path and ready</text>
+<polyline points="345.0,790 345.0,920" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="345.0,920 338.91048252244275,907.3937405670625 351.08951747755725,907.3937405670625" fill="#4C6074"/>
+<rect x="283.5" y="844.0" width="123" height="32" fill="white"/>
+<text x="345" y="860" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="830" y="920" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="954" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_incident_evidence_grants</text>
+<path d="M840 983H1470" stroke="#CBD4DE"/>
+<text x="848" y="1012" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK evidence_id and user_id</text>
+<text x="848" y="1048" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; auth.users</text>
+<polyline points="670,1022.5 830,1022.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="830,1022.5 817.3937405670625,1028.5895174775571 817.3937405670625,1016.4104825224427" fill="#4C6074"/>
+<rect x="688.5" y="1004.0" width="123" height="32" fill="white"/>
+<text x="750" y="1020" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="830" y="1250" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="1284" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_incident_evidence_leases</text>
+<path d="M840 1313H1470" stroke="#CBD4DE"/>
+<text x="848" y="1342" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK evidence_id and user_id</text>
+<text x="848" y="1378" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; auth.users</text>
+<text x="848" y="1414" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">expires_at</text>
+<polyline points="345.0,1125 345,1190 750,1190 750,1352 830,1352.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="830,1352.5 817.3559280349467,1358.5106109625024 817.4320455167611,1346.3318138721957" fill="#4C6074"/>
+<rect x="688.5" y="1174.0" width="123" height="32" fill="white"/>
+<text x="750" y="1190" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<text x="20" y="1310" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Incident evidence request_id references SOS events,</text>
+<text x="20" y="1355" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">not ordinary support_requests.</text>
+<text x="20" y="1510" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">These are selected schema tables. Encrypted private notes have no cloud journal table in this app.</text>
+</svg>

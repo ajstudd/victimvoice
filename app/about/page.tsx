@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Shield, Heart, Users, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +10,8 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-8">
         <nav className="flex justify-between items-center mb-16 animate-fade-in">
           <Link href="/" className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">VictimVoice</span>
+            <BrandMark size={40} />
+            <span className="text-2xl font-bold">Victim Voice</span>
           </Link>
           <Button className="bg-primary hover:bg-primary/90" asChild>
             <Link href="/login">Get Help Now</Link>
@@ -19,7 +20,7 @@ export default function AboutPage() {
 
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16 animate-fade-in">
-            <h1 className="text-4xl font-bold mb-6">About VictimVoice</h1>
+            <h1 className="text-4xl font-bold mb-6">About Victim Voice</h1>
             <p className="text-xl text-muted-foreground">
               Empowering survivors to speak up and find support in a safe, anonymous environment.
             </p>
@@ -40,13 +41,13 @@ export default function AboutPage() {
             <div className="space-y-6 animate-fade-in [animation-delay:200ms]">
               <h2 className="text-3xl font-bold">Our Mission</h2>
               <p className="text-muted-foreground">
-                VictimVoice Network was created with a singular purpose: to provide a safe haven for 
-                those who have experienced abuse or harassment. We believe that every voice 
-                deserves to be heard, and every story matters in the journey toward healing 
+                Victim Voice was created with a singular purpose: to provide a safe haven for
+                those who have experienced abuse or harassment. We believe that every voice
+                deserves to be heard, and every story matters in the journey toward healing
                 and justice.
               </p>
               <p className="text-muted-foreground">
-                Our platform connects survivors with dedicated volunteers who provide support, 
+                Our platform connects survivors with dedicated volunteers who provide support,
                 guidance, and resources while maintaining complete anonymity and confidentiality.
               </p>
             </div>
@@ -57,7 +58,7 @@ export default function AboutPage() {
               <Shield className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Safe & Secure</h3>
               <p className="text-muted-foreground">
-                Your privacy and security are our top priorities. All reports are encrypted 
+                Your privacy and security are our top priorities. All reports are encrypted
                 and anonymized.
               </p>
             </div>
@@ -65,7 +66,7 @@ export default function AboutPage() {
               <Heart className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Compassionate Support</h3>
               <p className="text-muted-foreground">
-                Our trained volunteers provide empathetic support and guidance throughout 
+                Our trained volunteers provide empathetic support and guidance throughout
                 your journey.
               </p>
             </div>
@@ -81,8 +82,8 @@ export default function AboutPage() {
           <div className="text-center bg-card rounded-2xl p-8 shadow-lg animate-fade-in [animation-delay:600ms]">
             <h2 className="text-3xl font-bold mb-6">Ready to Share Your Story?</h2>
             <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Take the first step towards healing. Our platform provides a safe space where 
-              you can share your experience and connect with supportive volunteers who are 
+              Take the first step towards healing. Our platform provides a safe space where
+              you can share your experience and connect with supportive volunteers who are
               here to help.
             </p>
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
@@ -95,7 +96,7 @@ export default function AboutPage() {
         </div>
 
         <footer className="mt-16 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} VictimVoice. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Victim Voice. All rights reserved.</p>
           <p className="mt-2">
             If you&apos;re in immediate danger, please call your local emergency services immediately.
           </p>

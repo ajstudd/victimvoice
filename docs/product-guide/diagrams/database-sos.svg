@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1430" viewBox="0 0 1500 1430"><rect width="100%" height="100%" fill="white"/>
+<rect x="20" y="15" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="49" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_regions</text>
+<path d="M30 78H660" stroke="#CBD4DE"/>
+<text x="38" y="107" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id</text>
+<text x="38" y="143" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">boundary and verified_at</text>
+<rect x="830" y="15" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="49" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_agencies</text>
+<path d="M840 78H1470" stroke="#CBD4DE"/>
+<text x="848" y="107" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK region_id</text>
+<text x="848" y="143" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">boundary and enabled</text>
+<polyline points="670,117.5 830,117.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="830,117.5 817.3937405670625,123.58951747755722 817.3937405670625,111.41048252244278" fill="#4C6074"/>
+<rect x="688.5" y="99.0" width="123" height="32" fill="white"/>
+<text x="750" y="115" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="20" y="350" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_events</text>
+<path d="M30 413H660" stroke="#CBD4DE"/>
+<text x="38" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK region_id</text>
+<text x="38" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK user_id &gt; auth.users</text>
+<text x="38" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">position status and expires_at</text>
+<rect x="830" y="350" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="384" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_responders</text>
+<path d="M840 413H1470" stroke="#CBD4DE"/>
+<text x="848" y="442" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id &gt; auth.users</text>
+<text x="848" y="478" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">FK region_id and agency_id</text>
+<text x="848" y="514" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">duty_until and position_at</text>
+<polyline points="345.0,220 345.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="345.0,350 338.91048252244275,337.39374056706254 351.08951747755725,337.39374056706254" fill="#4C6074"/>
+<rect x="283.5" y="264.0" width="123" height="32" fill="white"/>
+<text x="345" y="280" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="1155.0,220 1155.0,350" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1155.0,350 1148.9104825224429,337.39374056706254 1161.0895174775571,337.39374056706254" fill="#4C6074"/>
+<rect x="1093.5" y="264.0" width="123" height="32" fill="white"/>
+<text x="1155" y="280" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<rect x="20" y="690" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="724" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_recipients</text>
+<path d="M30 753H660" stroke="#CBD4DE"/>
+<text x="38" y="782" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK event_id plus contact_id</text>
+<text x="38" y="818" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">phone snapshot and state</text>
+<text x="38" y="854" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">contact_id has no contacts FK</text>
+<rect x="830" y="690" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="724" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_offers</text>
+<path d="M840 753H1470" stroke="#CBD4DE"/>
+<text x="848" y="782" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK event_id and responder_id</text>
+<text x="848" y="818" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">responder_id &gt; auth.users</text>
+<text x="848" y="854" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">dispatched_by and access_until</text>
+<polyline points="345.0,555 345.0,690" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="345.0,690 338.91048252244275,677.3937405670625 351.08951747755725,677.3937405670625" fill="#4C6074"/>
+<rect x="283.5" y="604.0" width="123" height="32" fill="white"/>
+<text x="345" y="620" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="1155.0,555 1155.0,690" fill="none" stroke="#876426" stroke-width="3" stroke-dasharray="11 9"/>
+<polygon points="1155.0,690 1148.9104825224429,677.3937405670625 1161.0895174775571,677.3937405670625" fill="#876426"/>
+<rect x="1019.5" y="604.0" width="271" height="32" fill="white"/>
+<text x="1155" y="620" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">same user ID not an FK</text>
+<rect x="20" y="1030" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="38" y="1064" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_jobs</text>
+<path d="M30 1093H660" stroke="#CBD4DE"/>
+<text x="38" y="1122" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK id and FK event_id</text>
+<text x="38" y="1158" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">contact_id and recipient_id</text>
+<text x="38" y="1194" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">kind and state</text>
+<rect x="830" y="1030" width="650" height="205" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="848" y="1064" font-family="Arial,sans-serif" font-size="27" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="start">vv_sos_devices</text>
+<path d="M840 1093H1470" stroke="#CBD4DE"/>
+<text x="848" y="1122" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">PK FK user_id plus token</text>
+<text x="848" y="1158" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">user_id &gt; auth.users</text>
+<text x="848" y="1194" font-family="Arial,sans-serif" font-size="26" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">updated_at</text>
+<polyline points="20,452.5 0,452 0,965 345,965 345.0,1030" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="345.0,1030 338.91048252244275,1017.3937405670625 351.08951747755725,1017.3937405670625" fill="#4C6074"/>
+<rect x="78.5" y="934.0" width="123" height="32" fill="white"/>
+<text x="140" y="950" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<polyline points="670,452.5 750,452 750,630 1155,630 1155.0,690" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1155.0,690 1148.9104825224429,677.3937405670625 1161.0895174775571,677.3937405670625" fill="#4C6074"/>
+<rect x="688.5" y="604.0" width="123" height="32" fill="white"/>
+<text x="750" y="620" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">1 to many</text>
+<text x="20" y="1320" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Solid arrows show selected FKs. Gold dashed lines show logical joins rather than declared FKs.</text>
+<text x="20" y="1370" font-family="Arial,sans-serif" font-size="25" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="start">Auth edges and the responder region edge are abbreviated. Jobs do not FK link to contact snapshots.</text>
+</svg>

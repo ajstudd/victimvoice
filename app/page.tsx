@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Shield, Heart, UserCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -13,9 +14,9 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 relative">
         <nav className="flex justify-between items-center mb-16 animate-fade-in">
           <div className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-primary animate-float" />
+            <BrandMark size={40} />
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-              VictimVoice Network
+              Victim Voice
             </span>
           </div>
           <div className="space-x-4">
@@ -107,7 +108,7 @@ export default function Home() {
         </main>
 
         <footer className="mt-24 text-center text-sm text-muted-foreground animate-fade-in [animation-delay:1200ms]">
-          <p>© {new Date().getFullYear()} VictimVoice. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Victim Voice. All rights reserved.</p>
           <p className="mt-2">
             If you&apos;re in immediate danger, please call your local emergency services immediately.
           </p>

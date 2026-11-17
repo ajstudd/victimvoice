@@ -76,3 +76,52 @@ test("automatic dispatch cancels on disable, background, duplicate request or a 
   );
   assert.equal(motionDecision(null, 21000, ready), "cancel");
 });
+
+test("three brief firm pulses over two seconds are detected with 50 Hz sampling", () => {
+  const detector = new ShakeDetector();
+  const hits: number[] = [];
+  for (let at = 0; at <= 2400; at += 20) {
+    const peak = [140, 820, 2180].some((start) => at >= start && at < start + 40);
+    if (detector.sample(peak ? 2.1 : 1, at)) hits.push(at);
+  }
+  assert.deepEqual(hits, [2180]);
+});
+
+test("normal handling sustained acceleration and isolated impacts do not count as three shakes", () => {
+  for (const value of [1, 1.3, 2.8]) {
+    const detector = new ShakeDetector();
+    for (let at = 0; at <= 4000; at += 20) assert.equal(detector.sample(value, at), false);
+  }
+  const detector = new ShakeDetector();
+  for (let at = 0; at <= 5000; at += 20) {
+    assert.equal(detector.sample(at === 100 || at === 4200 ? 3 : 1, at), false);
+  }
+});
+
+test("a sensor gap or reversed clock cannot complete a partially collected gesture", () => {
+  const d = new ShakeDetector();
+  d.sample(2.2, 0); d.sample(1, 100); d.sample(2.2, 200); d.sample(1, 300);
+  assert.equal(d.sample(2.2, 1200), false);
+  assert.equal(d.sample(2.2, 1000), false);
+  assert.equal(d.sample(-3, 1300), false);
+});
+
+test("drop low readings must be contiguous and the impact must follow promptly", () => {
+  const interrupted = new DropDetector();
+  interrupted.sample(0.2, 0); interrupted.sample(1, 40);
+  interrupted.sample(0.2, 400);
+  assert.equal(interrupted.sample(3, 440), false);
+  const recovered = new DropDetector();
+  recovered.sample(0.2, 0); recovered.sample(0.2, 100);
+  for (let at = 120; at < 500; at += 20) recovered.sample(1, at);
+  assert.equal(recovered.sample(3, 500), false);
+  const valid = new DropDetector();
+  for (let at = 0; at <= 100; at += 20) valid.sample(0.2, at);
+  assert.equal(valid.sample(3, 140), true);
+});
+
+test("interleaved normal samples cannot add up to a sustained freefall", () => {
+  const d = new DropDetector();
+  d.sample(0.2, 0); d.sample(1, 40); d.sample(0.2, 80);
+  assert.equal(d.sample(3, 120), false);
+});

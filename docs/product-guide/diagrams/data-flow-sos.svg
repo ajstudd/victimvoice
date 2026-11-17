@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1390" viewBox="0 0 1500 1390"><rect width="100%" height="100%" fill="white"/>
+<rect x="500" y="20" width="500" height="150" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="57" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">User chooses contact SMS</text>
+<text x="750.0" y="103" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Or a valid motion check in expires</text>
+<rect x="500" y="265" width="500" height="160" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="750.0" y="302" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">1 Durable local request</text>
+<text x="750.0" y="348" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Incident ID and recipient attempt IDs</text>
+<polyline points="750.0,170 750.0,265" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="750.0,265 743.9104825224427,252.39374056706254 756.0895174775573,252.39374056706254" fill="#4C6074"/>
+<rect x="649.0" y="197.0" width="202" height="32" fill="white"/>
+<text x="750" y="213" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">selected contacts</text>
+<rect x="15" y="540" width="630" height="170" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="330.0" y="577" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">2 Android SIM attempt</text>
+<text x="330.0" y="623" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Requires permission and default SIM</text>
+<text x="330.0" y="660" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Can work without internet</text>
+<rect x="855" y="540" width="630" height="170" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1170.0" y="577" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">3 Authenticated backend request</text>
+<text x="1170.0" y="623" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Consent and channel availability</text>
+<text x="1170.0" y="660" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Stores incident and contact status</text>
+<polyline points="750.0,425 750,475 330,475 330.0,540" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="330.0,540 323.91048252244275,527.3937405670625 336.08951747755725,527.3937405670625" fill="#4C6074"/>
+<rect x="259.5" y="459.0" width="141" height="32" fill="white"/>
+<text x="330" y="475" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">try SIM first</text>
+<polyline points="750.0,425 750,475 1170,475 1170.0,540" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1170.0,540 1163.9104825224429,527.3937405670625 1176.0895174775571,527.3937405670625" fill="#4C6074"/>
+<rect x="1014.5" y="459.0" width="311" height="32" fill="white"/>
+<text x="1170" y="475" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">cloud enabled and signed in</text>
+<rect x="15" y="870" width="630" height="175" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="330.0" y="907" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">4 Reconcile per contact result</text>
+<text x="330.0" y="953" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Unknown or partial means no blind retry</text>
+<text x="330.0" y="990" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Safe failure may allow fallback</text>
+<polyline points="330.0,710 330.0,870" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="330.0,870 323.91048252244275,857.3937405670625 336.08951747755725,857.3937405670625" fill="#4C6074"/>
+<rect x="257.0" y="774.0" width="146" height="32" fill="white"/>
+<text x="330" y="790" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">native result</text>
+<rect x="855" y="870" width="630" height="175" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1170.0" y="907" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">D1 Outbox and worker</text>
+<text x="1170.0" y="953" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Unique bounded delivery jobs</text>
+<text x="1170.0" y="990" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Twilio relay only when allowed</text>
+<polyline points="1170.0,710 1170.0,870" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1170.0,870 1163.9104825224429,857.3937405670625 1176.0895174775571,857.3937405670625" fill="#4C6074"/>
+<rect x="1095.0" y="774.0" width="150" height="32" fill="white"/>
+<text x="1170" y="790" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">validated job</text>
+<polyline points="645,957.5 855,957.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="855,957.5 842.3937405670625,963.5895174775573 842.3937405670625,951.4104825224427" fill="#4C6074"/>
+<rect x="675.0" y="942.0" width="150" height="32" fill="white"/>
+<text x="750" y="958" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">safe fallback</text>
+<rect x="855" y="1170" width="630" height="145" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="1170.0" y="1207" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">5 Twilio and signed callback</text>
+<text x="1170.0" y="1253" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Accepted delivered failed or unknown</text>
+<polyline points="1170.0,1045 1170.0,1170" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="1170.0,1170 1163.9104825224429,1157.3937405670624 1176.0895174775571,1157.3937405670624" fill="#4C6074"/>
+<rect x="1097.5" y="1089.0" width="145" height="32" fill="white"/>
+<text x="1170" y="1105" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">provider call</text>
+<rect x="15" y="1170" width="630" height="145" rx="12" fill="#EFF4F7" stroke="#586A7C" stroke-width="2"/>
+<text x="330.0" y="1207" font-family="Arial,sans-serif" font-size="30" font-weight="bold" fill="#182534" dominant-baseline="central" text-anchor="middle">User sees actual status</text>
+<text x="330.0" y="1253" font-family="Arial,sans-serif" font-size="27" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">Handoff is not a human response</text>
+<polyline points="330.0,1045 330.0,1170" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="330.0,1170 323.91048252244275,1157.3937405670624 336.08951747755725,1157.3937405670624" fill="#4C6074"/>
+<rect x="225.0" y="1089.0" width="210" height="32" fill="white"/>
+<text x="330" y="1105" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">recorded progress</text>
+<polyline points="855,1242.5 645,1242.5" fill="none" stroke="#4C6074" stroke-width="3"/>
+<polygon points="645,1242.5 657.6062594329375,1236.4104825224429 657.6062594329375,1248.5895174775571" fill="#4C6074"/>
+<rect x="709.0" y="1226.0" width="82" height="32" fill="white"/>
+<text x="750" y="1242" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#182534" dominant-baseline="central" text-anchor="middle">status</text>
+</svg>

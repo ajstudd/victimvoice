@@ -5,18 +5,23 @@ import * as Updates from "expo-updates";
 import { Button, Notice, T, s } from "./ui";
 
 export function AppUpdates() {
+  const { isUpdatePending, isDownloading } = Updates.useUpdates();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   async function check() {
-    if (busy) return;
+    if (busy || isDownloading) return;
+    if (isUpdatePending) {
+      setMessage("An update is already downloaded. Fully close and reopen Victim Voice to apply it.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     setFailed(false);
     try {
       const update = await Updates.checkForUpdateAsync();
       if (!update.isAvailable && !update.isRollBackToEmbedded) {
-        setMessage("Your app is up to date.");
+        setMessage("No newer update is available for this installed app version. Some improvements require installing the latest APK.");
         return;
       }
       await Updates.fetchUpdateAsync();
@@ -46,6 +51,9 @@ export function AppUpdates() {
             : "Your downloaded update is active."}
         </T>
       )}
+      {Platform.OS !== "web" && Updates.updateId && (
+        <T kind="caption">Update reference: {Updates.updateId.slice(0, 8)}</T>
+      )}
       {Platform.OS === "web" ? (
         <T kind="caption">
           The website updates on refresh. Install the Android app to receive app
@@ -60,7 +68,7 @@ export function AppUpdates() {
           <Button
             title="Check for app updates"
             tone="outline"
-            busy={busy}
+            busy={busy || isDownloading}
             onPress={check}
           />
         </>
@@ -69,8 +77,11 @@ export function AppUpdates() {
           Install the latest Android app version to enable automatic updates.
         </T>
       )}
-      {Boolean(message) && (
-        <Notice text={message} tone={failed ? "error" : "plain"} />
+      {(isUpdatePending || isDownloading || Boolean(message)) && (
+        <Notice text={isUpdatePending
+          ? "An update is already downloaded. Fully close and reopen Victim Voice to apply it."
+          : isDownloading ? "Downloading an app update…" : message}
+          tone={!isUpdatePending && !isDownloading && failed ? "error" : "plain"} />
       )}
     </View>
   );

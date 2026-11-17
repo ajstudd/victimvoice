@@ -1,10 +1,11 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
 
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -118,10 +119,10 @@ export default function LoginPage() {
             Back to Home
           </Link>
           <div className="flex justify-center mb-6">
-            <Shield className="h-12 w-12 text-primary" aria-hidden="true" />
+            <BrandMark size={64} />
           </div>
           <h1 className="text-3xl font-bold text-center mb-2">
-            {joining ? "Sign in to join your team" : "Welcome to VictimVoice"}
+            {joining ? "Sign in to join your team" : "Welcome to Victim Voice"}
           </h1>
           <p className="text-center text-muted-foreground mb-8">
             {joining

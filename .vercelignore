@@ -1,0 +1,11 @@
+# Deploy the website only; mobile builds and backend tooling are separate.
+mobile/
+supabase/
+design/
+docs/
+node_modules/
+.next*/
+.git/
+.env*
+*.tsbuildinfo
+.DS_Store

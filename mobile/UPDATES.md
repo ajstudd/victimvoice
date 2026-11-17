@@ -12,6 +12,12 @@ The local build script explicitly regenerates SDK 58 updates resources; its Grad
 
 The release uses version 1.2.1/code 5 and a fresh fingerprint from the cleaned source tree (local module build outputs and agent state are excluded). It preserves the internal signing identity. Install the GitHub release APK over the existing app without uninstalling; OTA cannot add native SMS/notification code to older builds. The saved release metadata and packaged fingerprint must match the published Expo preview manifest. The original 1.1.1 compatible update is preserved.
 
+## 1.2.2 helping hands logo — 11 November 2026
+
+The approved two-hands logo is used in app headers, the Android launcher, adaptive icon and launch screen. Version 1.2.2/code 6 keeps the prior internal signing certificate. Install over the existing app without uninstalling to retain device-bound private notes. Launcher and launch-screen changes require this new APK; OTA alone cannot replace them. Packaged runtime: `336f8e5d85c42b69b58b0560eff998e4448988c7`.
+
+Web, staff sign-in, personnel, emergency and support workspace branding use the same mark. Screenshots in `design/brand/qa` use fictional local data. Web production build and web/mobile lint and type checks passed. Android build and signing/embedded-backend checks passed; physical-device launch-screen and launcher checks remain.
+
 ## Project and channel
 
 - Expo owner: `junaid-appointy`
@@ -80,3 +86,28 @@ This release improves the current UI and existing flows; it does not enable back
 ## SMS handoff / cloud-write hotfix — 3 November 2026
 
 Preview update `01a1a073-7ce6-71b7-bf02-aa595bc46e4f`, group `3dd1216f-aba4-4acf-95d3-4684c365d222`, published at 08:08:05 UTC. Native runtime remains `29684cb3260bb6a1d3c62671edc73ae8dcfb95ce`; no new APK or SQL setup is required for this correction. The browser no longer invokes Share.share for contact messaging; SMS handoff targets selected saved numbers. This still requires Send in the SMS app. Automatic sending is pending a choice of Twilio backend or Android SIM SMS. Also fixes the user_id column-grant regression affecting contact and support inserts. TypeScript, lint and 26 tests passed. Metadata: ignored artifacts/ota-sms-handoff.json. See QA.md for details.
+
+## 12 November 2026 motion reliability update
+
+The foreground accelerometer now requests 20 ms sampling instead of 100 ms and uses native sample timestamps for gesture spacing. Shake recognition accepts three distinct firm peaks (1.9g with 1.4g reset hysteresis, at least 160 ms apart, at least 450 ms overall) within three seconds. Interrupted streams reset partial gestures. Drop recognition requires contiguous low readings for at least 80 ms and a prompt impact; it no longer combines separated lows. These are heuristic changes, not physical-device validation or a claim that falls are reliably identified.
+
+Home and Settings now show actual runtime listening, missing setup/delivery/permission, active-request pause, sensor-reading wait or the 60-second cancellation cooldown. Foreground re-entry refreshes delivery capability, and asynchronous sensor startup is generation-guarded to avoid stale subscriptions after backgrounding. No raw sensor samples are stored or uploaded. Existing 20-second cancellation, active-SOS duplicate protection, background cancellation and safe delivery rules remain.
+
+Regression checks cover brief firm peaks over two seconds, sustained acceleration and normal handling, isolated impacts, interrupted streams, reversed clocks, discontinuous low readings and delayed impacts. Real phone sensitivity and end-to-end delivery require consenting-device validation. Never drop a phone to test the feature. This JS-only update targets the existing 1.2.2 runtime; no native permission change is included.
+
+## 1.2.3 direct install preview — 12 November 2026
+
+The user reported that checking for updates said up to date. The 1.2.2 motion update was independently reverified as served with the correct runtime and asset hash; the actual installed phone version/pending state was not established. This replacement APK embeds the motion improvements directly, rather than depending on an OTA download. Install over the existing app without uninstalling.
+
+App updates now uses Expo's pending/download state: an already-downloaded update gets a reopen message instead of an unqualified up-to-date claim. No-new-update wording is scoped to the installed version, and Settings shows a short current update reference for troubleshooting. The APK is 1.2.3/code7, signed with the same internal certificate as 1.2.2. Lint/typecheck, 46 tests and native build passed. Embedded bundle checks confirm real backend, motion changes and update diagnostic copy. No real SMS or device delivery test was performed.
+
+
+## 17 November 2026 fresh backend OTA
+
+Published Android preview update `01a1e839-3171-7165-a1eb-11465691945c`, group `baf03647-d159-47cd-a87f-cde84c4a7cef`. Runtime `336f8e5d85c42b69b58b0560eff998e4448988c7` matches the 1.2.2 and 1.2.3 native builds. The preview EAS environment now contains the public URL and publishable key for Eusuf’s Supabase project `sjjlxuxqzcirvrquqbwa`. No native change or new APK is required for those builds. Older runtimes were not updated.
+
+The actual served update ID matches the publication. Its 4,233,456-byte launch asset passed the manifest SHA-256 check, contains the new project and public key, and excludes the old project and QA credentials. An incompatible runtime received HTTP 204. Mobile typecheck, lint and all 46 tests passed before publication. These checks establish availability and compatibility; the phone still needs to download and launch it.
+
+In Settings → App updates, check for updates, wait for download, then fully close and reopen the app. Users must sign in again because this project starts with fresh accounts and data. Keep the app installed to preserve its device-bound vault key. Local vaults are scoped to user IDs and are not automatically transferred to fresh accounts. Old cloud data remains in the original Supabase project.
+
+The Twilio provider test succeeded separately. Live SOS cloud SMS relay and responder push remain disabled pending their end-to-end checks. This OTA does not activate them.

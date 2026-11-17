@@ -107,8 +107,21 @@ export async function openEvidence(
     return { ...data, url: publicEvidenceLink(data.url) };
   const response = await client.storage
     .from(evidenceBucket(context))
-    .download(data.storage_path);
-  if (response.error) throw response.error;
+    .download(data.storage_path, {}, { cache: "no-store" });
+  if (response.error) {
+    const { status, statusCode, message } = response.error;
+    if (
+      status === 404 ||
+      ["404", "not_found", "NoSuchKey", "NoSuchBucket"].includes(statusCode ?? "") ||
+      /object not found/i.test(message)
+    ) {
+      throw new Error(
+        "This file could not be retrieved. Open it again to refresh access. If it still won't open, ask your support coordinator to check the file and sharing permissions.",
+        { cause: response.error },
+      );
+    }
+    throw response.error;
+  }
   return { ...data, blob: response.data as Blob };
 }
 

@@ -1,0 +1,12 @@
+{
+  "brand": "Victim Voice",
+  "selectedConcept": "Helping Hand",
+  "description": "Two reaching hands forming a protective loop, representing safety, help and human support.",
+  "source": "design/logo-explorations/2026-11-11/round-2/B-helping-hand.png",
+  "reference": "design/brand/selected-helping-hands-reference.png",
+  "approval": "User explicitly confirmed the displayed two-hands design after clarifying its option label.",
+  "assetStage": "Production assets applied to web, staff portal and mobile.",
+  "master": "design/brand/helping-hands-master.png",
+  "generationMode": "Built-in imagegen edit; transparent background extraction of the approved concept. Mechanical PNG resizing with Sharp.",
+  "prompt": "Extract ONLY the large central two-colour hands mark. Preserve its geometry, proportions and colours. Remove all lettering, ivory backdrop and both small samples. Single centred logo with a transparent background, no new shapes, lettering, shadows, gradients or frame."
+}
